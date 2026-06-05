@@ -26,6 +26,11 @@ export async function handleMisc(ctx: Context): Promise<void> {
         `/horoscope — гороскоп\n` +
         `/roll — бросить кубик\n` +
         `/help — помощь`,
+        {
+          reply_markup: {
+            inline_keyboard: [[{ text: "🎴 Открыть Мамулю", web_app: { url: "https://mamoolya.duckdns.org:8443/" } }]],
+          },
+        },
       );
       break;
     }
@@ -44,7 +49,11 @@ export async function handleMisc(ctx: Context): Promise<void> {
       break;
     }
     case "webapp": {
-      await ctx.reply("WebApp скоро будет!");
+      await ctx.reply("🌐 Открыть Мамулю:", {
+        reply_markup: {
+          inline_keyboard: [[{ text: "🌐 Открыть веб-приложение", web_app: { url: "https://mamoolya.duckdns.org:8443/" } }]],
+        },
+      });
       break;
     }
     default:

@@ -19,6 +19,13 @@ export function createBot(): Bot<Context> {
   LOG("Ignore middleware registered");
   bot.use(trackerMiddleware());
   LOG("Tracker middleware registered");
+  bot.use(async (ctx, next) => {
+    const text = ctx.message && "text" in ctx.message ? ctx.message.text : "?";
+    // biome-ignore lint: debug
+    console.error(`[UPDATE] text="${text}" chat=${ctx.chat?.id} from=${ctx.from?.id}`);
+    await next();
+  });
+  LOG("Debug middleware registered");
   registerHandlers(bot);
   LOG("Handlers registered");
   bot.catch((err) => {

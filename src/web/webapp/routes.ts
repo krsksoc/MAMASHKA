@@ -25,7 +25,7 @@ app.use(async (c: Context, next: Next): Promise<void> => {
   if (userId === null) {
     c.status(401);
     await c.json({ error: "Unauthorized" });
-    return;
+    return; // Don't call next() after sending response
   }
   await next();
 });

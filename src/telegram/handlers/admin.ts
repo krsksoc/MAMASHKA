@@ -1,10 +1,8 @@
 import type { Context } from "grammy";
-import { generateSummary } from "../../services/summary.js";
+import { generateMamoolyaNews } from "../../services/summary.js";
 import { getAnonQueue } from "../../services/anon.js";
 import { getAdminIds, getConfig } from "../../core/config.js";
 import { formatBold } from "../formatters/index.js";
-
-
 
 function isAdmin(ctx: Context): boolean {
   const config = getConfig();
@@ -13,6 +11,8 @@ function isAdmin(ctx: Context): boolean {
 }
 
 export async function handleAdmin(ctx: Context): Promise<void> {
+  // biome-ignore lint: debug
+  console.error(`[ADMIN] triggered, chat=${ctx.chat?.id}, from=${ctx.from?.id}`);
   const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
   const m = text.match(/^\/([a-zA-Z0-9_]+)/);
   let command = m ? m[1] ?? "" : "";
@@ -21,19 +21,21 @@ export async function handleAdmin(ctx: Context): Promise<void> {
   if (!chatId) return;
 
   switch (command) {
-    case "summary":
+    case "summary": {
+      await ctx.reply("⏳ Собираю последние 1000 сообщений...");
+      const summary = await generateMamoolyaNews(chatId, 1000);
+      await ctx.reply(summary);
+      break;
+    }
     case "summary_week": {
       if (!isAdmin(ctx)) {
         await ctx.reply("⛔ Админская команда.");
         return;
       }
+      await ctx.reply("⏳ Собираю саммари за неделю...");
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const summary = await generateSummary(
-        chatId,
-        weekAgo.toISOString(),
-        now.toISOString(),
-      );
+      const summary = await generateMamoolyaNews(chatId, 500);
       await ctx.reply(formatBold("Саммари за неделю") + "\n\n" + summary);
       break;
     }
@@ -61,7 +63,8 @@ export async function handleAdmin(ctx: Context): Promise<void> {
       await ctx.reply("Раскрытие автора пока не реализовано.");
       break;
     }
-    default:
-      await ctx.reply("Неизвестная команда.");
+    default: {
+      // intentionally empty
+    }
   }
 }
