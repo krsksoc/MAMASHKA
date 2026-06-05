@@ -10,7 +10,7 @@ export function ignoreMiddleware() {
       await next();
       return;
     }
-    const user = getUserFromCtx(ctx);
+    const user = extractUserFromCtx(ctx);
     if (user && isUserIgnored(user.id)) {
       return;
     }
@@ -18,7 +18,7 @@ export function ignoreMiddleware() {
   };
 }
 
-function getUserFromCtx(ctx: Context) {
+function extractUserFromCtx(ctx: Context) {
   const chatId = ctx.chat?.id;
   const telegramId = ctx.from?.id;
   if (!chatId || !telegramId) return null;

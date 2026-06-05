@@ -1,17 +1,12 @@
 import type { Context } from "grammy";
 import { formatBold } from "../formatters/index.js";
 
-function getCommandArg(match: string | RegExpMatchArray | undefined): string {
-  if (match === undefined) return "";
-  if (typeof match === "string") return match;
-  // For RegExpMatchArray, use the first captured group or full match
-  return match[1] ?? match[0] ?? "";
-}
-
 export async function handleMisc(ctx: Context): Promise<void> {
-  const command = getCommandArg(ctx.match);
+  const text = ctx.update.message?.text ?? "";
+  const match = text.match(/^\/([a-zA-Z0-9_]+)/);
+  const cmd = match ? match[1] : "";
 
-  switch (command) {
+  switch (cmd) {
     case "start":
     case "help": {
       await ctx.reply(

@@ -8,6 +8,11 @@ const app = new Hono();
 app.route("/admin", adminRoutes);
 app.route("/webapp", webappRoutes);
 
+app.onError((err, c) => {
+  console.error("[WEB ERROR]", String(err));
+  return c.json({ error: "Internal Server Error" }, 500);
+});
+
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 const config = getConfig();

@@ -8,8 +8,13 @@ const app = new Hono();
 app.use(adminAuthMiddleware());
 
 app.get("/prompts", (c) => {
-  const prompts = getAllActivePrompts();
-  return c.json({ prompts });
+  try {
+    const prompts = getAllActivePrompts();
+    return c.json({ prompts });
+  } catch (e) {
+    console.error("[ADMIN] /prompts error:", String(e));
+    return c.json({ error: String(e) }, 500);
+  }
 });
 
 app.post("/prompts", async (c) => {

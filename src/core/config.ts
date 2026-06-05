@@ -30,8 +30,24 @@ export type Config = z.infer<typeof configSchema>;
 
 function parseEnv(): Config {
   const env = process.env;
+  let botToken = env["BOT_TOKEN"] ?? "";
+  if (!botToken && env["BOT_TOKEN_FILE"]) {
+    try {
+      botToken = Bun.file(env["BOT_TOKEN_FILE"]).text().trim();
+    } catch {
+      // ignore
+    }
+  }
+  let adminSecret = env["ADMIN_SECRET"] ?? "";
+  if (!adminSecret && env["ADMIN_SECRET_FILE"]) {
+    try {
+      adminSecret = Bun.file(env["ADMIN_SECRET_FILE"]).text().trim();
+    } catch {
+      // ignore
+    }
+  }
   const raw = {
-    BOT_TOKEN: env["BOT_TOKEN"] ?? "",
+    BOT_TOKEN: botToken,
     ADMIN_IDS: env["ADMIN_IDS"] ?? "",
     OPENAI_API_KEY: env["OPENAI_API_KEY"] ?? "",
     OPENAI_MODEL: env["OPENAI_MODEL"] ?? "gpt-4o-mini",
@@ -42,7 +58,7 @@ function parseEnv(): Config {
     OLLAMA_BASE_URL: env["OLLAMA_BASE_URL"] ?? "http://localhost:11434",
     OLLAMA_MODEL: env["OLLAMA_MODEL"] ?? "llama3",
     PORT: env["PORT"] ?? "3000",
-    ADMIN_SECRET: env["ADMIN_SECRET"] ?? "",
+    ADMIN_SECRET: adminSecret,
     DB_PATH: env["DB_PATH"] ?? "data.db",
     RATE_LIMIT_PER_MINUTE: env["RATE_LIMIT_PER_MINUTE"] ?? "10",
   };
