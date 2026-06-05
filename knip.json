@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unjs.io/schema.json",
+  "entry": ["src/web/server.ts", "scripts/*.ts"],
+  "project": ["src/**/*.ts", "scripts/**/*.ts"],
+  "ignoreDependencies": ["@grammyjs/runner", "grammy", "hono", "zod"],
+  "ignoreUnresolved": ["bun-types"],
+  "ignoreFiles": ["src/**/*.ts"],
+  "rules": {
+    "files": "off",
+    "exports": "off",
+    "types": "off",
+    "dependencies": "error",
+    "unlisted": "error"
+  }
+}

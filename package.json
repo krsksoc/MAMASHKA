@@ -1,0 +1,32 @@
+{
+  "name": "mamashka",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "deadcode": "knip",
+    "guard:casts": "bun run scripts/guard-casts.ts",
+    "check": "bun run typecheck && bun run guard:casts && bun run lint && bun run deadcode && bun run format:check",
+    "fix": "biome check --write . && biome format --write .",
+    "migrate": "bun run scripts/migrate.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@grammyjs/runner": "^1.0.3",
+    "grammy": "^1.30.0",
+    "hono": "^4.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@types/bun": "latest",
+    "knip": "^5.0.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,42 @@
+import type { Bot } from "grammy";
+import type { Context } from "grammy";
+import { handleStats } from "./handlers/stats.js";
+import { handleReputation } from "./handlers/reputation.js";
+import { handleFun } from "./handlers/fun.js";
+import { handleQuotes } from "./handlers/quotes.js";
+import { handleAdmin } from "./handlers/admin.js";
+import { handleMisc } from "./handlers/misc.js";
+
+export function registerHandlers(bot: Bot<Context>): void {
+  bot.command("my_stats", handleStats);
+  bot.command("top_nolifers", handleStats);
+  bot.command("top_pairs", handleStats);
+  bot.command("sticker_stats", handleStats);
+  bot.command("friend_foe_stats", handleReputation);
+  bot.command("friend_foe_top", handleReputation);
+  bot.command("days_without_drama", handleReputation);
+  bot.command("drama", handleReputation);
+  bot.command("dvach", handleFun);
+  bot.command("psychologist", handleFun);
+  bot.command("fact", handleFun);
+  bot.command("predict", handleFun);
+  bot.command("imitate", handleFun);
+  bot.command("horoscope", handleFun);
+  bot.command("bottle", handleFun);
+  bot.command("roll", handleFun);
+  bot.command("quote", handleQuotes);
+  bot.command("quotes", handleQuotes);
+  bot.command("randomquote", handleQuotes);
+  bot.command("summary", handleAdmin);
+  bot.command("summary_week", handleAdmin);
+  bot.command("ban_vote", handleAdmin);
+  bot.command("publish_anons", handleAdmin);
+  bot.command("anon_sender", handleAdmin);
+  bot.command("start", handleMisc);
+  bot.command("help", handleMisc);
+  bot.command("menu", handleMisc);
+  bot.command("m_version", handleMisc);
+  bot.command("ignore_me", handleMisc);
+  bot.command("notice_me", handleMisc);
+  bot.command("webapp", handleMisc);
+}

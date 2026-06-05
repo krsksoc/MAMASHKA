@@ -1,0 +1,45 @@
+import type { LLMProvider } from "../provider.js";
+import type { LLMRequest, LLMOptions } from "../../core/types.js";
+import { LLMError } from "../../core/errors.js";
+import { getConfig } from "../../core/config.js";
+import { extractOpenAIContent } from "../provider.js";
+
+export function createOpenRouterProvider(): LLMProvider {
+  return {
+    name: "openrouter",
+    supportsStreaming: false,
+    async complete(request: LLMRequest, options?: LLMOptions): Promise<string> {
+      const config = getConfig();
+      if (!config.OPENROUTER_API_KEY) {
+        throw new LLMError("OpenRouter API key not configured", "openrouter");
+      }
+      const model = options?.model ?? config.OPENROUTER_MODEL;
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.OPENROUTER_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: request.system },
+            { role: "user", content: request.user },
+          ],
+          temperature: options?.temperature ?? 0.7,
+          max_tokens: options?.maxTokens ?? 1024,
+        }),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new LLMError(`OpenRouter API error ${response.status}: ${text}`, "openrouter");
+      }
+      const json = await response.json();
+      const content = extractOpenAIContent(json);
+      if (typeof content !== "string") {
+        throw new LLMError("OpenRouter returned no content", "openrouter");
+      }
+      return content;
+    },
+  };
+}
