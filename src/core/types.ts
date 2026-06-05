@@ -9,6 +9,8 @@ export interface User {
   lastMessageAt: string | null;
   isIgnored: boolean;
   messageCount: number;
+  birthYear: number | null;
+  birthMonth: number | null;
 }
 
 // Message from DB

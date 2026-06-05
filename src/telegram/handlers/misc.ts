@@ -4,7 +4,11 @@ import { formatBold } from "../formatters/index.js";
 export async function handleMisc(ctx: Context): Promise<void> {
   const text = ctx.update.message?.text ?? "";
   const match = text.match(/^\/([a-zA-Z0-9_]+)/);
-  const cmd = match ? match[1] : "";
+  let cmd = match ? match[1] ?? "" : "";
+  // Strip @BotName suffix (group commands)
+  if (cmd.includes("@")) cmd = cmd.split("@")[0]!;
+  // biome-ignore lint: debug
+  console.error(`[MISC] text="${text}" cmd="${cmd}"`);
 
   switch (cmd) {
     case "start":

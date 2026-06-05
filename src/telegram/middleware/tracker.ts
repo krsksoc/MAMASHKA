@@ -1,5 +1,5 @@
 import type { Context } from "grammy";
-import { getOrCreateUser } from "../../data/repos/users.js";
+import { getOrCreateUser, updateBirthDate } from "../../data/repos/users.js";
 import { insertMessage } from "../../data/repos/messages.js";
 
 type NextFunction = () => Promise<void>;
@@ -17,6 +17,15 @@ export function trackerMiddleware() {
     const displayName = ctx.from.first_name ?? null;
 
     const user = getOrCreateUser(telegramId, chatId, username, displayName);
+
+    // Save birth date from Telegram if available
+    const from = ctx.from as { birth_date?: string } | null;
+    if (user && from?.birth_date) {
+      const parts = from.birth_date.split("-");
+      const year = parts[0] ? parseInt(parts[0], 10) : null;
+      const month = parts[1] ? parseInt(parts[1], 10) : null;
+      updateBirthDate(user.id, year, month);
+    }
 
     if (user) {
       const msg = ctx.message;

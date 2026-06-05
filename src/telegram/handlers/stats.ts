@@ -2,14 +2,13 @@ import type { Context } from "grammy";
 import { getTopUsers, getStickerStats } from "../../services/stats.js";
 import { formatBold, formatRank, formatUserName } from "../formatters/index.js";
 
-function getCommandArg(match: string | RegExpMatchArray | undefined): string {
-  if (match === undefined) return "";
-  if (typeof match === "string") return match;
-  return match[1] ?? match[0] ?? "";
-}
+
 
 export async function handleStats(ctx: Context): Promise<void> {
-  const command = getCommandArg(ctx.match);
+  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const m = text.match(/^\/([a-zA-Z0-9_]+)/);
+  let command = m ? m[1] ?? "" : "";
+  if (command.includes("@")) command = command.split("@")[0]!;
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 

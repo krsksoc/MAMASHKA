@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readFileSync } from "node:fs";
 
 const configSchema = z.object({
   // Telegram
@@ -14,6 +15,8 @@ const configSchema = z.object({
   OPENROUTER_MODEL: z.string().default("mistralai/mixtral-8x7b-instruct"),
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_MODEL: z.string().default("llama3"),
+  WORM_KEY: z.string().default(""),
+  WORM_ENDPOINT: z.string().default("https://ai.wormsoft.ru/api/gpt/chat/completions"),
 
   // Server
   PORT: z.string().default("3000"),
@@ -33,7 +36,7 @@ function parseEnv(): Config {
   let botToken = env["BOT_TOKEN"] ?? "";
   if (!botToken && env["BOT_TOKEN_FILE"]) {
     try {
-      botToken = Bun.file(env["BOT_TOKEN_FILE"]).text().trim();
+      botToken = readFileSync(env["BOT_TOKEN_FILE"], "utf-8").trim();
     } catch {
       // ignore
     }
@@ -41,7 +44,7 @@ function parseEnv(): Config {
   let adminSecret = env["ADMIN_SECRET"] ?? "";
   if (!adminSecret && env["ADMIN_SECRET_FILE"]) {
     try {
-      adminSecret = Bun.file(env["ADMIN_SECRET_FILE"]).text().trim();
+      adminSecret = readFileSync(env["ADMIN_SECRET_FILE"], "utf-8").trim();
     } catch {
       // ignore
     }
@@ -57,6 +60,8 @@ function parseEnv(): Config {
     OPENROUTER_MODEL: env["OPENROUTER_MODEL"] ?? "mistralai/mixtral-8x7b-instruct",
     OLLAMA_BASE_URL: env["OLLAMA_BASE_URL"] ?? "http://localhost:11434",
     OLLAMA_MODEL: env["OLLAMA_MODEL"] ?? "llama3",
+    WORM_KEY: env["WORM_KEY"] ?? "",
+    WORM_ENDPOINT: env["WORM_ENDPOINT"] ?? "https://ai.wormsoft.ru/api/gpt/chat/completions",
     PORT: env["PORT"] ?? "3000",
     ADMIN_SECRET: adminSecret,
     DB_PATH: env["DB_PATH"] ?? "data.db",

@@ -16,6 +16,8 @@ function rowToUser(row: Record<string, unknown>): User {
     lastMessageAt: typeof row["last_message_at"] === "string" ? row["last_message_at"] : null,
     isIgnored: Number(row["is_ignored"]) === 1,
     messageCount: Number(row["message_count"]),
+    birthYear: row["birth_year"] !== undefined && row["birth_year"] !== null ? Number(row["birth_year"]) : null,
+    birthMonth: row["birth_month"] !== undefined && row["birth_month"] !== null ? Number(row["birth_month"]) : null,
   };
 }
 
@@ -88,4 +90,9 @@ export function isUserIgnored(userId: number): boolean {
 export function setIgnored(userId: number, ignored: boolean): void {
   const db = getDb();
   db.prepare("UPDATE users SET is_ignored = ? WHERE id = ?").run(ignored ? 1 : 0, userId);
+}
+
+export function updateBirthDate(userId: number, birthYear: number | null, birthMonth: number | null): void {
+  const db = getDb();
+  db.prepare("UPDATE users SET birth_year = ?, birth_month = ? WHERE id = ?").run(birthYear, birthMonth, userId);
 }

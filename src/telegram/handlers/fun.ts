@@ -10,18 +10,17 @@ import {
 } from "../../services/entertainment.js";
 import { getUserReputation } from "../../services/reputation.js";
 
-function getCommandArg(match: string | RegExpMatchArray | undefined): string {
-  if (match === undefined) return "";
-  if (typeof match === "string") return match;
-  return match[1] ?? match[0] ?? "";
-}
-
 export async function handleFun(ctx: Context): Promise<void> {
-  const command = getCommandArg(ctx.match);
+  // Parse command name from message text (ctx.match is argument only)
+  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const match = text.match(/^\/([a-zA-Z0-9_]+)/);
+  let command = match ? match[1] ?? "" : "";
+  if (command.includes("@")) command = command.split("@")[0]!;
+  // biome-ignore lint: debug
+  console.error(`[FUN] text="${text}" cmd="${command}"`);
   const chatId = ctx.chat?.id;
   const userId = ctx.from?.id;
   const userName = ctx.from?.first_name ?? ctx.from?.username ?? null;
-  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
 
   if (!chatId) return;
 
@@ -52,8 +51,8 @@ export async function handleFun(ctx: Context): Promise<void> {
       break;
     }
     case "horoscope": {
-      const sign = text.replace(/\/horoscope\s*/, "").trim() || "aries";
-      const horo = await generateHoroscope(userName, sign);
+      const sign = text.replace(/\/horoscope\s*/, "").trim();
+      const horo = await generateHoroscope(userName, sign, userId ?? null, chatId);
       await ctx.reply(horo);
       break;
     }

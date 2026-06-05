@@ -3,14 +3,13 @@ import { getRandomQuote, getQuotesByUser, insertQuote } from "../../data/repos/q
 import { getOrCreateUser } from "../../data/repos/users.js";
 import { formatBold } from "../formatters/index.js";
 
-function getCommandArg(match: string | RegExpMatchArray | undefined): string {
-  if (match === undefined) return "";
-  if (typeof match === "string") return match;
-  return match[1] ?? match[0] ?? "";
-}
+
 
 export async function handleQuotes(ctx: Context): Promise<void> {
-  const command = getCommandArg(ctx.match);
+  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const m = text.match(/^\/([a-zA-Z0-9_]+)/);
+  let command = m ? m[1] ?? "" : "";
+  if (command.includes("@")) command = command.split("@")[0]!;
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 

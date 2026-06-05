@@ -12,7 +12,8 @@ export function adminAuthMiddleware() {
   return async (c: Context, next: Next): Promise<void> => {
     const secret = c.req.header("x-admin-secret");
     if (!checkAdminSecret(secret)) {
-      return c.json({ error: "Unauthorized" }, 401);
+      await c.json({ error: "Unauthorized" }, 401);
+      return;
     }
     await next();
   };

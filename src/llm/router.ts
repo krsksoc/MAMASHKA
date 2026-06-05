@@ -4,7 +4,9 @@ import { createOpenAIProvider } from "./providers/openai.js";
 import { createAnthropicProvider } from "./providers/anthropic.js";
 import { createOpenRouterProvider } from "./providers/openrouter.js";
 import { createOllamaProvider } from "./providers/ollama.js";
+import { createWormsoftProvider } from "./providers/wormsoft.js";
 import { LLMError } from "../core/errors.js";
+import { getConfig } from "../core/config.js";
 
 // Task → chain of [provider, model?]
 export interface ProviderChain {
@@ -12,27 +14,33 @@ export interface ProviderChain {
   options?: LLMOptions;
 }
 
-const DEFAULT_CHAIN: ProviderChain = {
-  providers: [
-    { name: "openrouter", getProvider: createOpenRouterProvider },
-    { name: "openai", getProvider: createOpenAIProvider },
-    { name: "ollama", getProvider: createOllamaProvider },
-  ],
-};
+// Default chain: wormsoft → openai → openrouter → ollama
+function buildDefaultChain(): ProviderChain {
+  return {
+    providers: [
+      { name: "wormsoft", getProvider: createWormsoftProvider },
+      { name: "openai", getProvider: createOpenAIProvider },
+      { name: "openrouter", getProvider: createOpenRouterProvider },
+      { name: "ollama", getProvider: createOllamaProvider },
+    ],
+  };
+}
+
+const DEFAULT_CHAIN = buildDefaultChain();
 
 const chains: Record<string, ProviderChain> = {
   default: DEFAULT_CHAIN,
   fast: {
     providers: [
-      { name: "openrouter", getProvider: createOpenRouterProvider },
+      { name: "wormsoft", getProvider: createWormsoftProvider },
       { name: "openai", getProvider: createOpenAIProvider },
     ],
     options: { maxTokens: 256 },
   },
   summary: {
     providers: [
+      { name: "wormsoft", getProvider: createWormsoftProvider },
       { name: "anthropic", getProvider: createAnthropicProvider },
-      { name: "openai", getProvider: createOpenAIProvider },
     ],
   },
 };
