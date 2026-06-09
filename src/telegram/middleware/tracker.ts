@@ -7,12 +7,15 @@ type NextFunction = () => Promise<void>;
 export function trackerMiddleware() {
   return async (ctx: Context, next: NextFunction): Promise<void> => {
     if (!ctx.from || !ctx.chat) {
+      console.error(`[TRACKER] no ctx.from or ctx.chat, skipping`);
       await next();
       return;
     }
 
     const chatId = ctx.chat.id;
     const telegramId = ctx.from.id;
+    const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : null;
+    console.error(`[TRACKER] text="${text}" chat=${chatId} from=${telegramId}`);
     const username = ctx.from.username ?? null;
     const displayName = ctx.from.first_name ?? null;
 
@@ -29,7 +32,7 @@ export function trackerMiddleware() {
 
     if (user) {
       const msg = ctx.message;
-      const text = msg && "text" in msg ? msg.text : null;
+      const text = msg && typeof msg.text === "string" ? msg.text : null;
       const hasSticker = Boolean(msg && "sticker" in msg);
       const stickerEmoji: string | null = msg && "sticker" in msg && msg.sticker?.emoji ? msg.sticker.emoji : null;
       const replyToMsg = msg && "reply_to_message" in msg ? msg.reply_to_message : null;

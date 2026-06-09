@@ -8,7 +8,7 @@ export async function handleMisc(ctx: Context): Promise<void> {
   // Strip @BotName suffix (group commands)
   if (cmd.includes("@")) cmd = cmd.split("@")[0]!;
   // biome-ignore lint: debug
-  console.error(`[MISC] text="${text}" cmd="${cmd}"`);
+  console.error(`[MISC] text="${text}" cmd="${cmd}" chat=${ctx.chat?.id} from=${ctx.from?.id}`);
 
   switch (cmd) {
     case "start":
@@ -28,15 +28,40 @@ export async function handleMisc(ctx: Context): Promise<void> {
         `/help — помощь`,
         {
           reply_markup: {
-            inline_keyboard: [[{ text: "🎴 Открыть Мамулю", web_app: { url: "https://mamoolya.duckdns.org:8443/" } }]],
+            inline_keyboard: [[{ text: "🎴 Открыть Мамулю", url: "https://mamoolya.duckdns.org:8443/" }]],
           },
         },
       );
       break;
     }
-    case "menu":
-      await ctx.reply("Меню скоро будет!");
+    case "menu": {
+      await ctx.reply(`${formatBold("🎴 Меню Мамули")}\n\nВыбери, что хочешь:`, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "🎴 Открыть Мамулю", url: "https://mamoolya.duckdns.org:8443/" },
+            ],
+            [
+              { text: "📊 Моя статистика", callback_data: "menu_my_stats" },
+              { text: "🏆 Топ ноулайферов", callback_data: "menu_top_nolifers" },
+            ],
+            [
+              { text: "💬 Саммари чата", callback_data: "menu_summary" },
+              { text: "🎲 Развлечения", callback_data: "menu_fun" },
+            ],
+            [
+              { text: "🃏 Случайный пост", callback_data: "menu_dvach" },
+              { text: "📜 Цитаты", callback_data: "menu_quotes" },
+            ],
+            [
+              { text: "ℹ️ Помощь", callback_data: "menu_help" },
+              { text: "🔄 Обновить", callback_data: "menu_refresh" },
+            ],
+          ],
+        },
+      });
       break;
+    }
     case "m_version":
       await ctx.reply("Мамуля v0.1.0");
       break;
@@ -51,7 +76,7 @@ export async function handleMisc(ctx: Context): Promise<void> {
     case "webapp": {
       await ctx.reply("🌐 Открыть Мамулю:", {
         reply_markup: {
-          inline_keyboard: [[{ text: "🌐 Открыть веб-приложение", web_app: { url: "https://mamoolya.duckdns.org:8443/" } }]],
+          inline_keyboard: [[{ text: "🌐 Открыть веб-приложение", url: "https://mamoolya.duckdns.org:8443/" }]],
         },
       });
       break;

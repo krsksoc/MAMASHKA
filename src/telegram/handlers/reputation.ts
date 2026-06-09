@@ -6,7 +6,7 @@ import { formatBold, formatReputation, formatRank, formatUserName } from "../for
 
 
 export async function handleReputation(ctx: Context): Promise<void> {
-  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const m = text.match(/^\/([a-zA-Z0-9_]+)/);
   let command = m ? m[1] ?? "" : "";
   if (command.includes("@")) command = command.split("@")[0]!;

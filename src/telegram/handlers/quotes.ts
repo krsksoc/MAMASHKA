@@ -6,7 +6,7 @@ import { formatBold } from "../formatters/index.js";
 
 
 export async function handleQuotes(ctx: Context): Promise<void> {
-  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const m = text.match(/^\/([a-zA-Z0-9_]+)/);
   let command = m ? m[1] ?? "" : "";
   if (command.includes("@")) command = command.split("@")[0]!;
@@ -15,7 +15,7 @@ export async function handleQuotes(ctx: Context): Promise<void> {
 
   switch (command) {
     case "quote": {
-      const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+      const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
       const quoteText = text.replace(/\/quote\s*/, "").trim();
       if (!quoteText) {
         await ctx.reply("Использование: /quote <текст цитаты>");

@@ -2,6 +2,7 @@ import { Bot } from "grammy";
 import type { Context } from "grammy";
 import { getConfig } from "../core/config.js";
 import { registerHandlers } from "./router.js";
+import { registerCallbacks } from "./callback-router.js";
 import { trackerMiddleware } from "./middleware/tracker.js";
 import { ignoreMiddleware } from "./middleware/ignore.js";
 
@@ -20,7 +21,7 @@ export function createBot(): Bot<Context> {
   bot.use(trackerMiddleware());
   LOG("Tracker middleware registered");
   bot.use(async (ctx, next) => {
-    const text = ctx.message && "text" in ctx.message ? ctx.message.text : "?";
+    const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : null;
     // biome-ignore lint: debug
     console.error(`[UPDATE] text="${text}" chat=${ctx.chat?.id} from=${ctx.from?.id}`);
     await next();
@@ -28,6 +29,8 @@ export function createBot(): Bot<Context> {
   LOG("Debug middleware registered");
   registerHandlers(bot);
   LOG("Handlers registered");
+  registerCallbacks(bot);
+  LOG("Callbacks registered");
   bot.catch((err) => {
     const msg = err.ctx?.message?.text ?? "unknown";
     // biome-ignore lint: error handler, must use global console for errors

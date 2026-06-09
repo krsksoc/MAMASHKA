@@ -12,7 +12,7 @@ import { getUserReputation } from "../../services/reputation.js";
 
 export async function handleFun(ctx: Context): Promise<void> {
   // Parse command name from message text (ctx.match is argument only)
-  const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
+  const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const match = text.match(/^\/([a-zA-Z0-9_]+)/);
   let command = match ? match[1] ?? "" : "";
   if (command.includes("@")) command = command.split("@")[0]!;
