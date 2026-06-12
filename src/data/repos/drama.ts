@@ -6,7 +6,9 @@ function isRecord(val: unknown): val is Record<string, unknown> {
 
 export function getDaysWithoutDrama(chatId: number): number {
   const db = getDb();
-  const row = db.prepare("SELECT last_drama_at, record_days FROM drama_tracker WHERE chat_id = ?").get(chatId);
+  const row = db
+    .prepare("SELECT last_drama_at, record_days FROM drama_tracker WHERE chat_id = ?")
+    .get(chatId);
   if (!isRecord(row)) {
     return 0;
   }
@@ -25,13 +27,19 @@ export function getDaysWithoutDrama(chatId: number): number {
 export function recordDrama(chatId: number): void {
   const db = getDb();
   const now = new Date().toISOString();
-  const existing = db.prepare("SELECT record_days FROM drama_tracker WHERE chat_id = ?").get(chatId);
+  const existing = db
+    .prepare("SELECT record_days FROM drama_tracker WHERE chat_id = ?")
+    .get(chatId);
   if (existing) {
     const current = Number((existing as Record<string, unknown>)["record_days"]) || 0;
-    db.prepare("UPDATE drama_tracker SET last_drama_at = ?, record_days = ? WHERE chat_id = ?")
-      .run(now, current, chatId);
+    db.prepare("UPDATE drama_tracker SET last_drama_at = ?, record_days = ? WHERE chat_id = ?").run(
+      now,
+      current,
+      chatId,
+    );
   } else {
-    db.prepare("INSERT INTO drama_tracker (chat_id, last_drama_at, record_days) VALUES (?, ?, 0)")
-      .run(chatId, now);
+    db.prepare(
+      "INSERT INTO drama_tracker (chat_id, last_drama_at, record_days) VALUES (?, ?, 0)",
+    ).run(chatId, now);
   }
 }

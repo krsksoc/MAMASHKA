@@ -4,7 +4,10 @@ import { completeWithFallback, getChain } from "../llm/router.js";
 import { buildPromptRequest } from "../prompts/builder.js";
 
 function formatMessages(messages: Array<{ text: string | null }>): string {
-  return messages.filter((m) => m.text).map((m) => m.text).join("\n");
+  return messages
+    .filter((m) => m.text)
+    .map((m) => m.text)
+    .join("\n");
 }
 
 export async function imitateUser(

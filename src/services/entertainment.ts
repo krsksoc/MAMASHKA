@@ -1,5 +1,5 @@
 import { getRecentMessages } from "../data/repos/messages.js";
-import { getUserByTelegramId, getUser } from "../data/repos/users.js";
+import { getUser, getUserByTelegramId } from "../data/repos/users.js";
 import { completeWithFallback, getChain } from "../llm/router.js";
 import { buildPromptRequest } from "../prompts/builder.js";
 import { getUserReputation } from "./reputation.js";
@@ -26,7 +26,11 @@ function getZodiacSign(month: number, day: number): string {
   return "Рыбы";
 }
 
-export async function generateFact(userId: number, _chatId: number, userName: string | null): Promise<string> {
+export async function generateFact(
+  userId: number,
+  _chatId: number,
+  userName: string | null,
+): Promise<string> {
   const recent = getRecentMessages(userId, 30);
   const user = getUser(userId);
   const context = {
@@ -62,7 +66,11 @@ export async function generatePsychologist(
   return completeWithFallback(request, getChain("default"));
 }
 
-export async function generateDvach(userId: number, _chatId: number, userName: string | null): Promise<string> {
+export async function generateDvach(
+  userId: number,
+  _chatId: number,
+  userName: string | null,
+): Promise<string> {
   const recent = getRecentMessages(userId, 10);
   const context = {
     user_name: userName ?? "anon",
@@ -76,7 +84,10 @@ export async function generateDvach(userId: number, _chatId: number, userName: s
   return completeWithFallback(request, getChain("fast"));
 }
 
-export async function generatePredict(userName: string | null, reputation: number): Promise<string> {
+export async function generatePredict(
+  userName: string | null,
+  reputation: number,
+): Promise<string> {
   const context = {
     user_name: userName ?? "mysterious one",
     reputation,
@@ -121,7 +132,10 @@ export async function rollDice(_userName: string | null): Promise<string> {
   return `Someone rolled a ${dice}! 🎲`;
 }
 
-export async function spinBottle(_userName: string | null, participants: string[]): Promise<string> {
+export async function spinBottle(
+  _userName: string | null,
+  participants: string[],
+): Promise<string> {
   if (participants.length < 2) {
     return "Not enough people for bottle spin.";
   }

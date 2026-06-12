@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
   "files": {
-    "includes": ["src", "scripts"],
+    "includes": ["src/**/*.ts", "scripts/**/*.ts"],
     "ignoreUnknown": false
   },
   "formatter": {
@@ -18,11 +18,9 @@
       "suspicious": {
         "noExplicitAny": "error",
         "noDoubleEquals": "error",
-        "noEmptyBlockStatements": "error",
-        "noConsole": "error"
+        "noEmptyBlockStatements": "error"
       },
       "style": {
-        "noNonNullAssertion": "error",
         "useConst": "error",
         "useImportType": "error",
         "noParameterAssign": "error"

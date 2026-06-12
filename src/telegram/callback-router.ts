@@ -1,17 +1,21 @@
 import type { Bot, Context } from "grammy";
-import { formatBold } from "./formatters/index.js";
 import { generateMamoolyaNews } from "../services/summary.js";
-import { getTopUsers, getStickerStats } from "../services/stats.js";
-import { formatRank, formatUserName } from "./formatters/index.js";
+import { getAdminIds, getConfig } from "../core/config.js";
+import { formatBold, formatRank, formatUserName } from "./formatters/index.js";
+import { getTopUsers } from "../services/stats.js";
 
-const WEBAPP_URL = "https://mamoolya.duckdns.org:8443/";
+const WEBAPP_URL = "https://maman.krsksoc.pwtr.dev/?v=3";
+
+function isAdmin(ctx: Context): boolean {
+  const config = getConfig();
+  const adminIds = getAdminIds(config);
+  return adminIds.includes(ctx.from?.id ?? 0);
+}
 
 // Inline keyboards
 const mainMenuKeyboard = {
   inline_keyboard: [
-    [
-      { text: "🎴 Открыть Мамулю", url: WEBAPP_URL },
-    ],
+    [{ text: "🎴 Открыть Мамулю", url: WEBAPP_URL }],
     [
       { text: "📊 Моя статистика", callback_data: "menu_my_stats" },
       { text: "🏆 Топ ноулайферов", callback_data: "menu_top_nolifers" },
@@ -45,9 +49,7 @@ const funMenuKeyboard = {
       { text: "♈ Гороскоп", callback_data: "menu_horoscope" },
       { text: "👤 Имитировать", callback_data: "menu_imitate" },
     ],
-    [
-      { text: "⬅️ Назад", callback_data: "menu_back" },
-    ],
+    [{ text: "⬅️ Назад", callback_data: "menu_back" }],
   ],
 };
 
@@ -66,7 +68,6 @@ async function answerAndEdit(ctx: Context, text: string, keyboard?: object) {
 
 export async function handleCallback(ctx: Context): Promise<void> {
   const data = ctx.callbackQuery?.data ?? "";
-  // biome-ignore lint: debug
   console.error(`[CALLBACK] data="${data}" chat=${ctx.chat?.id} from=${ctx.from?.id}`);
 
   const chatId = ctx.chat?.id;
@@ -89,13 +90,18 @@ export async function handleCallback(ctx: Context): Promise<void> {
         await ctx.reply("Нет данных.");
         return;
       }
-      const lines = top.map((u, i) =>
-        `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`
+      const lines = top.map(
+        (u, i) =>
+          `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`,
       );
       await ctx.reply(formatBold("Топ ноулайферов") + "\n\n" + lines.join("\n"));
       break;
     }
     case "menu_summary": {
+      if (!isAdmin(ctx)) {
+        await ctx.answerCallbackQuery("⛔ Только для админов.");
+        return;
+      }
       await ctx.answerCallbackQuery("⏳ Собираю саммари...");
       const summary = await generateMamoolyaNews(chatId, 1000);
       await ctx.reply(`💬 ${formatBold("Саммари чата")}\n\n${summary}`, {
@@ -106,7 +112,11 @@ export async function handleCallback(ctx: Context): Promise<void> {
       break;
     }
     case "menu_fun": {
-      await answerAndEdit(ctx, `${formatBold("🎲 Развлечения")}\n\nВыбери, чем развлечься:`, funMenuKeyboard);
+      await answerAndEdit(
+        ctx,
+        `${formatBold("🎲 Развлечения")}\n\nВыбери, чем развлечься:`,
+        funMenuKeyboard,
+      );
       break;
     }
     case "menu_dvach": {
@@ -121,26 +131,31 @@ export async function handleCallback(ctx: Context): Promise<void> {
       break;
     }
     case "menu_help": {
-      await answerAndEdit(ctx,
+      await answerAndEdit(
+        ctx,
         `${formatBold("Мамуля — мемный бот-терапевт")}\n\n` +
-        `Команды:\n` +
-        `/my_stats — твоя статистика\n` +
-        `/top_nolifers — самые активные\n` +
-        `/dvach — случайный пост\n` +
-        `/psychologist — иди к психологу\n` +
-        `/fact — интересный факт\n` +
-        `/predict — предсказание\n` +
-        `/quote — сохранить цитату\n` +
-        `/horoscope — гороскоп\n` +
-        `/roll — бросить кубик\n` +
-        `/summary — саммари последних сообщений\n` +
-        `/menu — открыть меню`,
+          `Команды:\n` +
+          `/my_stats — твоя статистика\n` +
+          `/top_nolifers — самые активные\n` +
+          `/dvach — случайный пост\n` +
+          `/psychologist — иди к психологу\n` +
+          `/fact — интересный факт\n` +
+          `/predict — предсказание\n` +
+          `/quote — сохранить цитату\n` +
+          `/horoscope — гороскоп\n` +
+          `/roll — бросить кубик\n` +
+          `/summary — саммари последних сообщений\n` +
+          `/menu — открыть меню`,
         mainMenuKeyboard,
       );
       break;
     }
     case "menu_refresh": {
-      await answerAndEdit(ctx, `${formatBold("🎴 Меню Мамули")}\n\nВыбери, что хочешь:`, mainMenuKeyboard);
+      await answerAndEdit(
+        ctx,
+        `${formatBold("🎴 Меню Мамули")}\n\nВыбери, что хочешь:`,
+        mainMenuKeyboard,
+      );
       break;
     }
 
@@ -169,7 +184,9 @@ export async function handleCallback(ctx: Context): Promise<void> {
     }
     case "menu_psychologist": {
       await ctx.answerCallbackQuery("🧠 Анализирую...");
-      await ctx.reply("🧠 Ты пришёл к мемному боту за психологической помощью?\n\nЛадно, вот совет: закрой телеграм и погуляй 20 минут. Вернёшься — будет легче.");
+      await ctx.reply(
+        "🧠 Ты пришёл к мемному боту за психологической помощью?\n\nЛадно, вот совет: закрой телеграм и погуляй 20 минут. Вернёшься — будет легче.",
+      );
       break;
     }
     case "menu_fact": {
@@ -205,7 +222,11 @@ export async function handleCallback(ctx: Context): Promise<void> {
       break;
     }
     case "menu_back": {
-      await answerAndEdit(ctx, `${formatBold("🎴 Меню Мамули")}\n\nВыбери, что хочешь:`, mainMenuKeyboard);
+      await answerAndEdit(
+        ctx,
+        `${formatBold("🎴 Меню Мамули")}\n\nВыбери, что хочешь:`,
+        mainMenuKeyboard,
+      );
       break;
     }
 

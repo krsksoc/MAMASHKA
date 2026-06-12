@@ -1,8 +1,14 @@
 import { Hono } from "hono";
-import { getAllActivePrompts, createPrompt, getPromptVersions } from "../../data/repos/prompts.js";
-import { getActiveModifierRules, createModifierRule, deactivateModifierRule } from "../../data/repos/prompts.js";
+import {
+  createModifierRule,
+  createPrompt,
+  deactivateModifierRule,
+  getActiveModifierRules,
+  getAllActivePrompts,
+  getPromptVersions,
+} from "../../data/repos/prompts.js";
 import { adminAuthMiddleware } from "./auth.js";
-import { createPromptSchema, createModifierRuleSchema, toggleModifierSchema } from "./schemas.js";
+import { createModifierRuleSchema, createPromptSchema, toggleModifierSchema } from "./schemas.js";
 
 const app = new Hono();
 app.use(adminAuthMiddleware());
@@ -43,8 +49,15 @@ app.post("/modifiers", async (c) => {
   if (!bodyParsed.success) {
     return c.json({ error: "invalid request body" }, 400);
   }
-  const { modifierSlug, conditionType, conditionValue, priority, compatibleTasks } = bodyParsed.data;
-  const rule = createModifierRule(modifierSlug, conditionType, conditionValue, priority, compatibleTasks);
+  const { modifierSlug, conditionType, conditionValue, priority, compatibleTasks } =
+    bodyParsed.data;
+  const rule = createModifierRule(
+    modifierSlug,
+    conditionType,
+    conditionValue,
+    priority,
+    compatibleTasks,
+  );
   return c.json({ ok: true, id: rule.id });
 });
 

@@ -1,5 +1,5 @@
-import { createPrompt, getAllActivePrompts } from "../data/repos/prompts.js";
 import type { Prompt } from "../core/types.js";
+import { createPrompt, getAllActivePrompts } from "../data/repos/prompts.js";
 
 // In-memory cache
 const _cache = new Map<string, Prompt>();

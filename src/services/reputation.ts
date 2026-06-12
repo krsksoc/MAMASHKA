@@ -1,7 +1,15 @@
-import { addReputationEvent, getReputation, getReputationRanking } from "../data/repos/reputation.js";
+import {
+  addReputationEvent,
+  getReputation,
+  getReputationRanking,
+} from "../data/repos/reputation.js";
 import { getUser } from "../data/repos/users.js";
 
-export function voteFriend(chatId: number, targetUserId: number, sourceUserId: number | null): number {
+export function voteFriend(
+  chatId: number,
+  targetUserId: number,
+  sourceUserId: number | null,
+): number {
   return addReputationEvent(chatId, targetUserId, sourceUserId, 1, "friend");
 }
 
@@ -16,7 +24,12 @@ export function getUserReputation(chatId: number, userId: number): number {
 export function getTopReputation(
   chatId: number,
   limit: number,
-): Array<{ userId: number; displayName: string | null; username: string | null; reputation: number }> {
+): Array<{
+  userId: number;
+  displayName: string | null;
+  username: string | null;
+  reputation: number;
+}> {
   const ranking = getReputationRanking(chatId, limit);
   return ranking.map((r) => {
     const user = getUser(r.userId);

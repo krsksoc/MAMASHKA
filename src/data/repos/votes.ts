@@ -1,5 +1,5 @@
-import { getDb } from "../db.js";
 import type { Vote } from "../../core/types.js";
+import { getDb } from "../db.js";
 
 function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null;
@@ -42,7 +42,9 @@ export function createVote(
 export function getActiveVotes(chatId: number): Vote[] {
   const db = getDb();
   const rows = db
-    .prepare("SELECT * FROM votes WHERE chat_id = ? AND status = 'active' AND expires_at > datetime('now')")
+    .prepare(
+      "SELECT * FROM votes WHERE chat_id = ? AND status = 'active' AND expires_at > datetime('now')",
+    )
     .all(chatId);
   if (!rows || !Array.isArray(rows)) {
     return [];
@@ -52,7 +54,9 @@ export function getActiveVotes(chatId: number): Vote[] {
 
 export function addVoteEntry(voteId: number, userId: number, choice: "yes" | "no"): boolean {
   const db = getDb();
-  const stmt = db.prepare("INSERT INTO vote_entries (vote_id, user_id, choice, created_at) VALUES (?, ?, ?, datetime('now'))");
+  const stmt = db.prepare(
+    "INSERT INTO vote_entries (vote_id, user_id, choice, created_at) VALUES (?, ?, ?, datetime('now'))",
+  );
   try {
     stmt.run(voteId, userId, choice);
     return true;
@@ -63,7 +67,9 @@ export function addVoteEntry(voteId: number, userId: number, choice: "yes" | "no
 
 export function getVoteCount(voteId: number, choice: "yes" | "no"): number {
   const db = getDb();
-  const row = db.prepare("SELECT COUNT(*) count FROM vote_entries WHERE vote_id = ? AND choice = ?").get(voteId, choice);
+  const row = db
+    .prepare("SELECT COUNT(*) count FROM vote_entries WHERE vote_id = ? AND choice = ?")
+    .get(voteId, choice);
   if (!isRecord(row)) {
     return 0;
   }
@@ -72,7 +78,9 @@ export function getVoteCount(voteId: number, choice: "yes" | "no"): number {
 
 export function hasUserVoted(voteId: number, userId: number): boolean {
   const db = getDb();
-  const row = db.prepare("SELECT 1 FROM vote_entries WHERE vote_id = ? AND user_id = ?").get(voteId, userId);
+  const row = db
+    .prepare("SELECT 1 FROM vote_entries WHERE vote_id = ? AND user_id = ?")
+    .get(voteId, userId);
   return isRecord(row);
 }
 

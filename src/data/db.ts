@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getConfig } from "../core/config.js";
 
@@ -60,8 +60,16 @@ export function getDb(): Database {
         continue;
       }
       const sql = readFileSync(join(migrationsDir, file), "utf-8");
-      _db.exec(sql);
-      _db.prepare("INSERT INTO _migrations (name) VALUES (?)").run(file);
+      try {
+        _db.exec("BEGIN TRANSACTION");
+        _db.exec(sql);
+        _db.prepare("INSERT INTO _migrations (name) VALUES (?)").run(file);
+        _db.exec("COMMIT");
+      } catch (e) {
+        _db.exec("ROLLBACK");
+        console.error(`[MIGRATION FAILED] ${file}:`, e);
+        throw e;
+      }
     }
   }
 

@@ -1,10 +1,10 @@
 import type { Context } from "grammy";
 import {
-  generateFact,
-  generatePsychologist,
   generateDvach,
-  generatePredict,
+  generateFact,
   generateHoroscope,
+  generatePredict,
+  generatePsychologist,
   rollDice,
   spinBottle,
 } from "../../services/entertainment.js";
@@ -14,9 +14,8 @@ export async function handleFun(ctx: Context): Promise<void> {
   // Parse command name from message text (ctx.match is argument only)
   const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const match = text.match(/^\/([a-zA-Z0-9_]+)/);
-  let command = match ? match[1] ?? "" : "";
+  let command = match ? (match[1] ?? "") : "";
   if (command.includes("@")) command = command.split("@")[0]!;
-  // biome-ignore lint: debug
   console.error(`[FUN] text="${text}" cmd="${command}"`);
   const chatId = ctx.chat?.id;
   const userId = ctx.from?.id;

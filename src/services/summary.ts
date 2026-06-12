@@ -48,7 +48,13 @@ export async function generateMamoolyaNews(chatId: number, limit = 1000): Promis
   });
 
   // Override system to include raw messages in system (LLM always reads system)
-  request.system = request.system + "\n\n=== СООБЩЕНИЯ ЧАТА (последние " + messages.length + "): ===\n" + formatted + "\n=== КОНЕЦ СООБЩЕНИЙ ===\n\nТы должна сделать сводку ТОЛЬКО из этих сообщений. Не придумывай участников.";
+  request.system =
+    request.system +
+    "\n\n=== СООБЩЕНИЯ ЧАТА (последние " +
+    messages.length +
+    "): ===\n" +
+    formatted +
+    "\n=== КОНЕЦ СООБЩЕНИЙ ===\n\nТы должна сделать сводку ТОЛЬКО из этих сообщений. Не придумывай участников.";
 
   return completeWithFallback(request, getChain("summary"));
 }

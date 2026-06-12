@@ -1,7 +1,7 @@
-import type { LLMProvider } from "../provider.js";
-import type { LLMRequest, LLMOptions } from "../../core/types.js";
-import { LLMError } from "../../core/errors.js";
 import { getConfig } from "../../core/config.js";
+import { LLMError } from "../../core/errors.js";
+import type { LLMOptions, LLMRequest } from "../../core/types.js";
+import type { LLMProvider } from "../provider.js";
 import { extractOllamaContent } from "../provider.js";
 
 export function createOllamaProvider(): LLMProvider {

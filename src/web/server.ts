@@ -1,19 +1,26 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { Hono } from "hono";
+import { fileURLToPath } from "url";
 import { getConfig } from "../core/config.js";
 import { adminRoutes } from "./admin/routes.js";
 import { webappRoutes } from "./webapp/routes.js";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "../../public");
 
 const app = new Hono();
 
-// Static files for webapp — must come BEFORE the API routes
-app.use("/webapp/*", async (c) => {
-  const path = c.req.path.replace("/webapp", "") || "/";
+// Static files for webapp — BEFORE API routes, skips paths without extension (API calls)
+app.use("/webapp/*", async (c, next) => {
+  const rawPath = c.req.path.replace("/webapp", "") || "/";
+  const path = rawPath.split("?")[0] || "/";
+
+  // If no file extension, skip to API routes
+  if (path !== "/" && !path.includes(".")) {
+    return next();
+  }
+
   const filePath = join(PUBLIC_DIR, "webapp", path === "/" ? "index.html" : path);
   try {
     const content = readFileSync(filePath);
@@ -28,9 +35,11 @@ app.use("/webapp/*", async (c) => {
     const ext = filePath.substring(filePath.lastIndexOf("."));
     const mime = mimeTypes[ext] ?? "text/plain";
     c.header("Content-Type", mime);
+    c.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    c.header("Pragma", "no-cache");
     return c.body(content);
   } catch {
-    return c.text("Not Found", 404);
+    return next(); // File not found — let API routes try
   }
 });
 
@@ -42,6 +51,8 @@ app.get("/", async (c) => {
   try {
     const content = readFileSync(join(PUBLIC_DIR, "webapp/index.html"));
     c.header("Content-Type", "text/html; charset=utf-8");
+    c.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    c.header("Pragma", "no-cache");
     return c.body(content);
   } catch {
     return c.text("Not Found", 404);

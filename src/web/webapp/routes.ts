@@ -1,33 +1,88 @@
-import { Hono } from "hono";
-import { validateInitData } from "./auth.js";
-import { getConfig } from "../../core/config.js";
-import { getActiveUsers } from "../../data/repos/users.js";
-import { getReputation } from "../../data/repos/reputation.js";
-import { getMyAnons, insertAnonMessage } from "../../data/repos/anon.js";
-import { addReputationEvent } from "../../data/repos/reputation.js";
-import { getRandomQuote } from "../../data/repos/quotes.js";
-import { voteSchema, anonSendSchema } from "./schemas.js";
 import type { Context, Next } from "hono";
+import { Hono } from "hono";
+import { getConfig } from "../../core/config.js";
+import { getMyAnons, insertAnonMessage } from "../../data/repos/anon.js";
+import { getRandomQuote } from "../../data/repos/quotes.js";
+import { addReputationEvent, getReputationSummary } from "../../data/repos/reputation.js";
+import { getActiveUsers, getUserByTelegramId } from "../../data/repos/users.js";
+import { getUserChats, getUserChatsByTelegramId } from "../../data/repos/user_chats.js";
+import { getUserMessageCount } from "../../services/stats.js";
+import { validateInitData } from "./auth.js";
+import { anonSendSchema, voteSchema } from "./schemas.js";
 
 const app = new Hono();
 
-function authUser(c: Context): number | null {
-  const initData = c.req.header("x-init-data");
-  if (!initData) return null;
-  const config = getConfig();
-  const user = validateInitData(initData, config.BOT_TOKEN);
-  if (!user) return null;
-  return user.id;
+interface AuthContext {
+  userId: number;
+  telegramId: number;
+  firstName: string;
+  username?: string;
 }
 
-app.use(async (c: Context, next: Next): Promise<void> => {
-  const userId = authUser(c);
-  if (userId === null) {
-    c.status(401);
-    await c.json({ error: "Unauthorized" });
-    return; // Don't call next() after sending response
+function authUser(c: Context): AuthContext | null {
+  const initData = c.req.header("x-init-data");
+  if (!initData) {
+    console.error("[AUTH] No x-init-data header");
+    return null;
   }
+  const config = getConfig();
+  const user = validateInitData(initData, config.BOT_TOKEN);
+  if (!user) {
+    console.error("[AUTH] validateInitData failed for initData length", initData.length);
+    return null;
+  }
+  return {
+    userId: 0,
+    telegramId: user.id,
+    firstName: user.first_name,
+    username: user.username,
+  };
+}
+
+app.use(async (c: Context, next: Next): Promise<Response | void> => {
+  const auth = authUser(c);
+  if (auth === null) {
+    c.status(401);
+    return c.json({ error: "Unauthorized" });
+  }
+  (c as unknown as Record<string, unknown>)["__auth"] = auth;
   await next();
+});
+
+function getAuth(c: Context): AuthContext {
+  return (c as unknown as Record<string, unknown>)["__auth"] as AuthContext;
+}
+
+// Get user's chats
+app.get("/chats", (c) => {
+  const auth = getAuth(c);
+  const dbUser = getUserByTelegramId(auth.telegramId, 0); // chatId 0 won't match
+  // Actually we need to find the user in any chat — we use user_chats table directly
+  const chats = getUserChatsByTelegramId(auth.telegramId);
+  return c.json({ chats });
+});
+
+// Get user stats for a chat
+app.get("/stats", (c) => {
+  const auth = getAuth(c);
+  const chatId = parseInt(c.req.query("chat_id") ?? "0", 10);
+  if (!chatId) return c.json({ error: "chat_id required" }, 400);
+
+  const user = getUserByTelegramId(auth.telegramId, chatId);
+  if (!user) return c.json({ error: "User not found in chat" }, 404);
+
+  const reputation = getReputationSummary(chatId, user.id);
+  const messages = getUserMessageCount(chatId, user.id);
+
+  return c.json({
+    userId: user.id,
+    displayName: user.displayName,
+    username: user.username,
+    messageCount: messages,
+    reputation: reputation.totalDelta ?? 0,
+    friendCount: reputation.friendCount ?? 0,
+    foeCount: reputation.foeCount ?? 0,
+  });
 });
 
 app.get("/reputation/next-card", (c) => {
@@ -44,19 +99,20 @@ app.get("/reputation/next-card", (c) => {
   if (!randomUser) {
     return c.json({ empty: true });
   }
-  const reputation = getReputation(chatId, randomUser.id);
+  const reputation = getReputationSummary(chatId, randomUser.id);
   const quote = getRandomQuote(chatId);
 
   return c.json({
     userId: randomUser.id,
     username: randomUser.username,
     displayName: randomUser.displayName,
-    reputation,
+    reputation: reputation.totalDelta ?? 0,
     quote: quote?.text ?? null,
   });
 });
 
 app.post("/reputation/vote", async (c) => {
+  const auth = getAuth(c);
   const chatId = parseInt(c.req.query("chat_id") ?? "0", 10);
   if (!chatId) return c.json({ error: "chat_id required" }, 400);
 
@@ -66,11 +122,13 @@ app.post("/reputation/vote", async (c) => {
   }
   const { target_user_id, choice } = bodyParsed.data;
   const delta = choice === "friend" ? 1 : -1;
-  addReputationEvent(chatId, target_user_id, null, delta, "webapp_vote");
+  const voter = getUserByTelegramId(auth.telegramId, chatId);
+  addReputationEvent(chatId, target_user_id, voter?.id ?? null, delta, "webapp_vote");
   return c.json({ ok: true });
 });
 
 app.post("/anon/send", async (c) => {
+  const auth = getAuth(c);
   const chatId = parseInt(c.req.query("chat_id") ?? "0", 10);
   if (!chatId) return c.json({ error: "chat_id required" }, 400);
 
@@ -78,14 +136,17 @@ app.post("/anon/send", async (c) => {
   if (!bodyParsed.success) {
     return c.json({ error: "text required" }, 400);
   }
-  const senderId = 0; // TODO: get from auth
+  const sender = getUserByTelegramId(auth.telegramId, chatId);
+  const senderId = sender?.id ?? 0;
   const id = insertAnonMessage(chatId, senderId, bodyParsed.data.text);
   return c.json({ ok: true, id });
 });
 
 app.get("/anon/my", (c) => {
-  const senderId = parseInt(c.req.query("sender_id") ?? "0", 10);
-  if (!senderId) return c.json({ error: "sender_id required" }, 400);
+  const auth = getAuth(c);
+  const chatId = parseInt(c.req.query("chat_id") ?? "0", 10);
+  const sender = chatId ? getUserByTelegramId(auth.telegramId, chatId) : null;
+  const senderId = sender?.id ?? 0;
   const anons = getMyAnons(senderId);
   return c.json({ anons });
 });

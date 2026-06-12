@@ -1,4 +1,4 @@
-import type { LLMRequest, LLMOptions } from "../core/types.js";
+import type { LLMOptions, LLMRequest } from "../core/types.js";
 
 export interface LLMProvider {
   complete(request: LLMRequest, options?: LLMOptions): Promise<string>;
@@ -45,9 +45,7 @@ export function extractAnthropicText(json: unknown): string | undefined {
   return undefined;
 }
 
-export function isOllamaMessage(
-  json: unknown,
-): json is { message?: { content?: string } } {
+export function isOllamaMessage(json: unknown): json is { message?: { content?: string } } {
   if (typeof json !== "object" || json === null) return false;
   return true;
 }

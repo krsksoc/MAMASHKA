@@ -1,14 +1,12 @@
 import type { Context } from "grammy";
-import { getUserReputation, getTopReputation } from "../../services/reputation.js";
 import { getDaysWithoutDrama } from "../../data/repos/drama.js";
-import { formatBold, formatReputation, formatRank, formatUserName } from "../formatters/index.js";
-
-
+import { getTopReputation, getUserReputation } from "../../services/reputation.js";
+import { formatBold, formatRank, formatReputation, formatUserName } from "../formatters/index.js";
 
 export async function handleReputation(ctx: Context): Promise<void> {
   const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const m = text.match(/^\/([a-zA-Z0-9_]+)/);
-  let command = m ? m[1] ?? "" : "";
+  let command = m ? (m[1] ?? "") : "";
   if (command.includes("@")) command = command.split("@")[0]!;
   const chatId = ctx.chat?.id;
   if (!chatId) return;
@@ -27,8 +25,9 @@ export async function handleReputation(ctx: Context): Promise<void> {
         await ctx.reply("Нет данных.");
         return;
       }
-      const lines = top.map((u, i) =>
-        `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} ${formatReputation(u.reputation)}`
+      const lines = top.map(
+        (u, i) =>
+          `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} ${formatReputation(u.reputation)}`,
       );
       await ctx.reply(formatBold("Топ репутации") + "\n\n" + lines.join("\n"));
       break;

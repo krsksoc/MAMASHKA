@@ -1,5 +1,5 @@
-import { getDb } from "../db.js";
 import type { Message } from "../../core/types.js";
+import { getDb } from "../db.js";
 
 function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null;
@@ -10,7 +10,8 @@ function rowToMessage(row: Record<string, unknown>): Message {
     id: Number(row["id"]),
     chatId: Number(row["chat_id"]),
     userId: Number(row["user_id"]),
-    telegramMessageId: typeof row["telegram_message_id"] === "number" ? row["telegram_message_id"] : null,
+    telegramMessageId:
+      typeof row["telegram_message_id"] === "number" ? row["telegram_message_id"] : null,
     text: typeof row["text"] === "string" ? row["text"] : null,
     hasSticker: Number(row["has_sticker"]) === 1,
     stickerEmoji: typeof row["sticker_emoji"] === "string" ? row["sticker_emoji"] : null,
@@ -21,7 +22,9 @@ function rowToMessage(row: Record<string, unknown>): Message {
 
 export function getChatMessages(chatId: number, limit: number): Message[] {
   const db = getDb();
-  const rows = db.prepare("SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at DESC LIMIT ?").all(chatId, limit);
+  const rows = db
+    .prepare("SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at DESC LIMIT ?")
+    .all(chatId, limit);
   if (!rows || !Array.isArray(rows)) {
     return [];
   }
@@ -30,17 +33,26 @@ export function getChatMessages(chatId: number, limit: number): Message[] {
 
 export function getRecentMessages(userId: number, limit: number): Message[] {
   const db = getDb();
-  const rows = db.prepare("SELECT * FROM messages WHERE user_id = ? ORDER BY created_at DESC LIMIT ?").all(userId, limit);
+  const rows = db
+    .prepare("SELECT * FROM messages WHERE user_id = ? ORDER BY created_at DESC LIMIT ?")
+    .all(userId, limit);
   if (!rows || !Array.isArray(rows)) {
     return [];
   }
   return rows.filter(isRecord).map(rowToMessage);
 }
 
-export function getMessagesByDateRange(chatId: number, startDate: string, endDate: string, limit: number): Message[] {
+export function getMessagesByDateRange(
+  chatId: number,
+  startDate: string,
+  endDate: string,
+  limit: number,
+): Message[] {
   const db = getDb();
   const rows = db
-    .prepare("SELECT * FROM messages WHERE chat_id = ? AND created_at >= ? AND created_at <= ? ORDER BY created_at ASC LIMIT ?")
+    .prepare(
+      "SELECT * FROM messages WHERE chat_id = ? AND created_at >= ? AND created_at <= ? ORDER BY created_at ASC LIMIT ?",
+    )
     .all(chatId, startDate, endDate, limit);
   if (!rows || !Array.isArray(rows)) {
     return [];
@@ -73,22 +85,27 @@ export interface MessageWithUser {
 
 export function getChatMessagesWithUsers(chatId: number, limit: number): MessageWithUser[] {
   const db = getDb();
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(`
     SELECT m.text, m.created_at, m.user_id, u.username, u.display_name
     FROM messages m
     JOIN users u ON m.user_id = u.id
     WHERE m.chat_id = ? AND m.text IS NOT NULL AND m.text != ''
-    ORDER BY m.created_at ASC
+    ORDER BY m.created_at DESC
     LIMIT ?
-  `).all(chatId, limit);
+  `)
+    .all(chatId, limit);
   if (!rows || !Array.isArray(rows)) {
     return [];
   }
-  return rows.filter(isRecord).map((row) => ({
-    text: typeof row["text"] === "string" ? row["text"] : null,
-    createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
-    userId: Number(row["user_id"]),
-    username: typeof row["username"] === "string" ? row["username"] : null,
-    displayName: typeof row["display_name"] === "string" ? row["display_name"] : null,
-  }));
+  return rows
+    .filter(isRecord)
+    .map((row) => ({
+      text: typeof row["text"] === "string" ? row["text"] : null,
+      createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
+      userId: Number(row["user_id"]),
+      username: typeof row["username"] === "string" ? row["username"] : null,
+      displayName: typeof row["display_name"] === "string" ? row["display_name"] : null,
+    }))
+    .reverse(); // reverse back to chronological for summary
 }

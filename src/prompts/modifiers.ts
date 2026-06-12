@@ -1,5 +1,5 @@
-import { getActiveModifierRules } from "../data/repos/prompts.js";
 import type { ModifierRule } from "../core/types.js";
+import { getActiveModifierRules } from "../data/repos/prompts.js";
 import type { PromptContext } from "./schema.js";
 
 import { getPromptFromStore } from "./store.js";

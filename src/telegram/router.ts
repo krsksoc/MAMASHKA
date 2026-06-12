@@ -1,11 +1,12 @@
-import type { Bot } from "grammy";
-import type { Context } from "grammy";
-import { handleStats } from "./handlers/stats.js";
-import { handleReputation } from "./handlers/reputation.js";
-import { handleFun } from "./handlers/fun.js";
-import { handleQuotes } from "./handlers/quotes.js";
+import type { Bot, Context } from "grammy";
 import { handleAdmin } from "./handlers/admin.js";
+import { handleFun } from "./handlers/fun.js";
 import { handleMisc } from "./handlers/misc.js";
+import { handleQuotes } from "./handlers/quotes.js";
+import { handleReputation } from "./handlers/reputation.js";
+import { handleStats } from "./handlers/stats.js";
+
+import { adminOnly } from "./middleware/auth.js";
 
 export function registerHandlers(bot: Bot<Context>): void {
   bot.command("my_stats", handleStats);
@@ -28,10 +29,10 @@ export function registerHandlers(bot: Bot<Context>): void {
   bot.command("quotes", handleQuotes);
   bot.command("randomquote", handleQuotes);
   bot.command("summary", handleAdmin);
-  bot.command("summary_week", handleAdmin);
-  bot.command("ban_vote", handleAdmin);
-  bot.command("publish_anons", handleAdmin);
-  bot.command("anon_sender", handleAdmin);
+  bot.command("summary_week", adminOnly(), handleAdmin);
+  bot.command("ban_vote", adminOnly(), handleAdmin);
+  bot.command("publish_anons", adminOnly(), handleAdmin);
+  bot.command("anon_sender", adminOnly(), handleAdmin);
   bot.command("start", handleMisc);
   bot.command("help", handleMisc);
   bot.command("menu", handleMisc);

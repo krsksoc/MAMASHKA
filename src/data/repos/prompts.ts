@@ -1,5 +1,5 @@
+import type { ModifierRule, Prompt } from "../../core/types.js";
 import { getDb } from "../db.js";
-import type { Prompt, ModifierRule } from "../../core/types.js";
 
 function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null;
@@ -35,7 +35,12 @@ function rowToPrompt(row: Record<string, unknown>): Prompt {
 function rowToModifierRule(row: Record<string, unknown>): ModifierRule {
   const rawType = valStr(row, "condition_type");
   let conditionType: ModifierRule["conditionType"] = "custom";
-  if (rawType === "time_range" || rawType === "reputation_range" || rawType === "flag" || rawType === "custom") {
+  if (
+    rawType === "time_range" ||
+    rawType === "reputation_range" ||
+    rawType === "flag" ||
+    rawType === "custom"
+  ) {
     conditionType = rawType;
   }
   return {
@@ -79,9 +84,11 @@ export function getAllActivePrompts(): Prompt[] {
 export function createPrompt(slug: string, content: string): Prompt {
   const db = getDb();
   const now = new Date().toISOString();
-  const result = db.prepare(
-    "INSERT INTO prompts (slug, content, version, is_active, created_at, updated_at) VALUES (?, ?, 1, 1, ?, ?)",
-  ).run(slug, content, now, now);
+  const result = db
+    .prepare(
+      "INSERT INTO prompts (slug, content, version, is_active, created_at, updated_at) VALUES (?, ?, 1, 1, ?, ?)",
+    )
+    .run(slug, content, now, now);
   return {
     id: Number(result.lastInsertRowid),
     slug,
@@ -116,9 +123,9 @@ export function deactivatePrompt(slug: string): boolean {
 
 export function getActiveModifierRules(): ModifierRule[] {
   const db = getDb();
-  const rows = db.prepare(
-    "SELECT * FROM modifier_rules WHERE is_active = 1 ORDER BY priority DESC",
-  ).all();
+  const rows = db
+    .prepare("SELECT * FROM modifier_rules WHERE is_active = 1 ORDER BY priority DESC")
+    .all();
   if (!rows || !Array.isArray(rows)) return [];
   const rules: ModifierRule[] = [];
   for (const row of rows) {
@@ -138,9 +145,11 @@ export function createModifierRule(
 ): ModifierRule {
   const db = getDb();
   const tasksJson = compatibleTasks ? JSON.stringify(compatibleTasks) : null;
-  const result = db.prepare(
-    "INSERT INTO modifier_rules (modifier_slug, condition_type, condition_value, priority, compatible_tasks, is_active) VALUES (?, ?, ?, ?, ?, 1)",
-  ).run(modifierSlug, conditionType, conditionValue, priority, tasksJson);
+  const result = db
+    .prepare(
+      "INSERT INTO modifier_rules (modifier_slug, condition_type, condition_value, priority, compatible_tasks, is_active) VALUES (?, ?, ?, ?, ?, 1)",
+    )
+    .run(modifierSlug, conditionType, conditionValue, priority, tasksJson);
   return {
     id: Number(result.lastInsertRowid),
     modifierSlug,

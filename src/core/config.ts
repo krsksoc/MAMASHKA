@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { readFileSync } from "node:fs";
+import { z } from "zod";
 
 const configSchema = z.object({
   // Telegram
@@ -16,7 +16,7 @@ const configSchema = z.object({
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_MODEL: z.string().default("llama3"),
   WORM_KEY: z.string().default(""),
-  WORM_ENDPOINT: z.string().default("https://ai.wormsoft.ru/api/gpt/chat/completions"),
+  WORM_ENDPOINT: z.string().default("https://ai.wormsoft.ru/api/gpt/v1"),
 
   // Server
   PORT: z.string().default("3000"),
@@ -61,7 +61,7 @@ function parseEnv(): Config {
     OLLAMA_BASE_URL: env["OLLAMA_BASE_URL"] ?? "http://localhost:11434",
     OLLAMA_MODEL: env["OLLAMA_MODEL"] ?? "llama3",
     WORM_KEY: env["WORM_KEY"] ?? "",
-    WORM_ENDPOINT: env["WORM_ENDPOINT"] ?? "https://ai.wormsoft.ru/api/gpt/chat/completions",
+    WORM_ENDPOINT: env["WORM_ENDPOINT"] ?? "https://ai.wormsoft.ru/api/gpt/v1",
     PORT: env["PORT"] ?? "3000",
     ADMIN_SECRET: adminSecret,
     DB_PATH: env["DB_PATH"] ?? "data.db",
@@ -70,9 +70,7 @@ function parseEnv(): Config {
 
   const result = configSchema.safeParse(raw);
   if (!result.success) {
-    const errors = result.error.errors
-      .map((e) => `  ${e.path.join(".")}: ${e.message}`)
-      .join("\n");
+    const errors = result.error.errors.map((e) => `  ${e.path.join(".")}: ${e.message}`).join("\n");
     throw new Error(`Configuration validation failed:\n${errors}`);
   }
 

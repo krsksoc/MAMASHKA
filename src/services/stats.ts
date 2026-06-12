@@ -1,5 +1,5 @@
-import { getUsersByChat, getUser } from "../data/repos/users.js";
 import { getChatMessages } from "../data/repos/messages.js";
+import { getUser, getUsersByChat } from "../data/repos/users.js";
 
 export interface UserStats {
   userId: number;
@@ -20,7 +20,10 @@ export function getTopUsers(chatId: number, limit: number): UserStats[] {
   }));
 }
 
-export function getStickerStats(chatId: number, limit: number): Array<{ emoji: string; count: number }> {
+export function getStickerStats(
+  chatId: number,
+  limit: number,
+): Array<{ emoji: string; count: number }> {
   const messages = getChatMessages(chatId, 5000);
   const counts = new Map<string, number>();
   for (const msg of messages) {

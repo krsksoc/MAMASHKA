@@ -1,5 +1,5 @@
-import { getDb } from "../db.js";
 import type { AnonMessage } from "../../core/types.js";
+import { getDb } from "../db.js";
 
 function isRecord(val: unknown): val is Record<string, unknown> {
   return typeof val === "object" && val !== null;
@@ -32,7 +32,11 @@ export function insertAnonMessage(chatId: number, senderId: number, text: string
 
 export function getPendingAnons(chatId: number): AnonMessage[] {
   const db = getDb();
-  const rows = db.prepare("SELECT * FROM anon_messages WHERE chat_id = ? AND status = 'pending' ORDER BY created_at ASC").all(chatId);
+  const rows = db
+    .prepare(
+      "SELECT * FROM anon_messages WHERE chat_id = ? AND status = 'pending' ORDER BY created_at ASC",
+    )
+    .all(chatId);
   if (!rows || !Array.isArray(rows)) {
     return [];
   }
@@ -41,7 +45,9 @@ export function getPendingAnons(chatId: number): AnonMessage[] {
 
 export function publishAnon(id: number): void {
   const db = getDb();
-  db.prepare("UPDATE anon_messages SET status = 'published', published_at = datetime('now') WHERE id = ?").run(id);
+  db.prepare(
+    "UPDATE anon_messages SET status = 'published', published_at = datetime('now') WHERE id = ?",
+  ).run(id);
 }
 
 export function rejectAnon(id: number): void {
@@ -51,7 +57,9 @@ export function rejectAnon(id: number): void {
 
 export function getMyAnons(senderId: number): AnonMessage[] {
   const db = getDb();
-  const rows = db.prepare("SELECT * FROM anon_messages WHERE sender_id = ? ORDER BY created_at DESC").all(senderId);
+  const rows = db
+    .prepare("SELECT * FROM anon_messages WHERE sender_id = ? ORDER BY created_at DESC")
+    .all(senderId);
   if (!rows || !Array.isArray(rows)) {
     return [];
   }

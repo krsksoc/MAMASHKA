@@ -11,6 +11,15 @@ export interface User {
   messageCount: number;
   birthYear: number | null;
   birthMonth: number | null;
+  isNew: boolean;
+  introCompleted: boolean;
+  introStep: number;
+  famousFor: string | null;
+  genderRole: string | null;
+  age: number | null;
+  lifestyle: string | null;
+  morals: string | null;
+  sexRole: string | null;
 }
 
 // Message from DB

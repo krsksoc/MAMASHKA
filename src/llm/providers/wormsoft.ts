@@ -1,7 +1,7 @@
-import type { LLMProvider } from "../provider.js";
-import type { LLMRequest, LLMOptions } from "../../core/types.js";
-import { LLMError } from "../../core/errors.js";
 import { getConfig } from "../../core/config.js";
+import { LLMError } from "../../core/errors.js";
+import type { LLMOptions, LLMRequest } from "../../core/types.js";
+import type { LLMProvider } from "../provider.js";
 
 function extractText(json: unknown): string {
   if (typeof json !== "object" || json === null) return "";
@@ -27,7 +27,7 @@ export function createWormsoftProvider(): LLMProvider {
         throw new LLMError("Wormsoft API key not configured", "wormsoft");
       }
       const model = options?.model ?? "openai/gpt-oss:120b";
-      const response = await fetch(config.WORM_ENDPOINT, {
+      const response = await fetch(`${config.WORM_ENDPOINT}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,10 +1,17 @@
-import { getConfig } from "../../core/config.js";
 import type { Context, Next } from "hono";
+import { getConfig } from "../../core/config.js";
 
 export function checkAdminSecret(secret: string | undefined): boolean {
   if (!secret) return false;
   const config = getConfig();
-  console.error("[AUTH] ADMIN_SECRET length:", config.ADMIN_SECRET.length, "| secret len:", secret.length, "| match:", secret === config.ADMIN_SECRET);
+  console.error(
+    "[AUTH] ADMIN_SECRET length:",
+    config.ADMIN_SECRET.length,
+    "| secret len:",
+    secret.length,
+    "| match:",
+    secret === config.ADMIN_SECRET,
+  );
   return config.ADMIN_SECRET.length > 0 && secret === config.ADMIN_SECRET;
 }
 

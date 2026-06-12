@@ -1,12 +1,17 @@
 import { Database } from "bun:sqlite";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 type MigrationRow = { name: string };
 
 function isMigrationRow(row: unknown): row is MigrationRow {
-  return typeof row === "object" && row !== null && "name" in row && typeof (row as Record<string, unknown>)["name"] === "string";
+  return (
+    typeof row === "object" &&
+    row !== null &&
+    "name" in row &&
+    typeof (row as Record<string, unknown>)["name"] === "string"
+  );
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,7 +43,9 @@ if (!existsSync(migrationsDir)) {
   process.exit(0);
 }
 
-const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+const files = readdirSync(migrationsDir)
+  .filter((f) => f.endsWith(".sql"))
+  .sort();
 
 for (const file of files) {
   if (applied.has(file)) {

@@ -1,8 +1,8 @@
-import { getPromptFromStore } from "./store.js";
-import { renderTemplate } from "./templates.js";
+import type { LLMRequest } from "../core/types.js";
 import { resolveModifiers } from "./modifiers.js";
 import type { PromptContext } from "./schema.js";
-import type { LLMRequest } from "../core/types.js";
+import { getPromptFromStore } from "./store.js";
+import { renderTemplate } from "./templates.js";
 
 export interface BuildOptions {
   taskSlug: string;

@@ -3,3 +3,8 @@ node_modules
 *.db
 *.sqlite
 dist
+ssl/
+.hermes/
+public/
+run.sh.bak
+test_*.ts

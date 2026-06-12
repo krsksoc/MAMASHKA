@@ -1,4 +1,11 @@
-import { createVote, getActiveVotes, addVoteEntry, getVoteCount, hasUserVoted, updateVoteStatus } from "../data/repos/votes.js";
+import {
+  addVoteEntry,
+  createVote,
+  getActiveVotes,
+  getVoteCount,
+  hasUserVoted,
+  updateVoteStatus,
+} from "../data/repos/votes.js";
 
 export function startBanVote(chatId: number, targetUserId: number, initiatedBy: number): number {
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
