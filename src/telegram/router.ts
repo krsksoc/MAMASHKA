@@ -1,6 +1,7 @@
 import type { Bot, Context } from "grammy";
 import { handleAdmin } from "./handlers/admin.js";
 import { handleFun } from "./handlers/fun.js";
+import { handleHealth } from "./handlers/health.js";
 import { handleMisc } from "./handlers/misc.js";
 import { handleQuotes } from "./handlers/quotes.js";
 import { handleReputation } from "./handlers/reputation.js";
@@ -10,6 +11,7 @@ import { adminOnly } from "./middleware/auth.js";
 
 export function registerHandlers(bot: Bot<Context>): void {
   bot.command("my_stats", handleStats);
+  bot.command("stats", handleStats);
   bot.command("top_nolifers", handleStats);
   bot.command("top_pairs", handleStats);
   bot.command("sticker_stats", handleStats);
@@ -40,4 +42,5 @@ export function registerHandlers(bot: Bot<Context>): void {
   bot.command("ignore_me", handleMisc);
   bot.command("notice_me", handleMisc);
   bot.command("webapp", handleMisc);
+  bot.command("health", handleHealth);
 }

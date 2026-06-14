@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 import { getConfig } from "../core/config.js";
 import { adminRoutes } from "./admin/routes.js";
 import { webappRoutes } from "./webapp/routes.js";
+import { getHealthData } from "./health.js";
+import { getStatsData, renderStatsPage } from "./stats/dashboard.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "../../public");
@@ -46,6 +48,15 @@ app.use("/webapp/*", async (c, next) => {
 app.route("/admin", adminRoutes);
 app.route("/webapp", webappRoutes);
 
+// Stats dashboard
+app.get("/stats", (c) => {
+  const data = getStatsData();
+  return c.html(renderStatsPage(data));
+});
+app.get("/stats/api", (c) => {
+  return c.json(getStatsData());
+});
+
 // Serve webapp at root for Telegram WebApp button
 app.get("/", async (c) => {
   try {
@@ -64,7 +75,10 @@ app.onError((err, c) => {
   return c.json({ error: "Internal Server Error" }, 500);
 });
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+app.get("/health", (c) => {
+  const data = getHealthData();
+  return c.json(data);
+});
 
 const config = getConfig();
 const port = parseInt(config.PORT, 10);

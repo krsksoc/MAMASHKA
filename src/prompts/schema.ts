@@ -33,6 +33,9 @@ export const contextSchema = z.object({
   target_messages_sample: z.string().optional(),
   all_messages: z.string().optional(),
   date_range: z.string().optional(),
+  chat_context: z.string().optional(),
+  reply_to_text: z.string().optional(),
+  reply_to_user: z.string().optional(),
 });
 
 export type Placeholder = z.infer<typeof placeholderSchema>;

@@ -39,6 +39,46 @@ export function createBot(): Bot<Context> {
   LOG("Debug middleware registered");
   bot.use(rateLimitMiddleware());
   LOG("Rate limit middleware registered");
+
+  // Reply to bot messages — LLM-powered conversation
+  bot.on("message", async (ctx, next) => {
+    const msg = ctx.message;
+    if (!msg || !msg.reply_to_message) {
+      await next();
+      return;
+    }
+    if (msg.reply_to_message.from?.id !== ctx.me.id) {
+      await next();
+      return;
+    }
+    const text = msg.text ?? "";
+    if (!text.trim()) {
+      await next();
+      return;
+    }
+
+    const chatId = ctx.chat?.id;
+    const userId = ctx.from?.id;
+    const userName = ctx.from?.first_name ?? ctx.from?.username ?? null;
+    if (!chatId || !userId) {
+      await next();
+      return;
+    }
+
+    const replyText = msg.reply_to_message.text ?? null;
+    const replyUserName = msg.reply_to_message.from?.first_name ?? msg.reply_to_message.from?.username ?? null;
+
+    try {
+      const { generateReply } = await import("../services/llm_reply.js");
+      const response = await generateReply(chatId, userId, userName, text, replyText, replyUserName);
+      await ctx.reply(response);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[REPLY] error:`, msg);
+      await next();
+    }
+  });
+
   registerHandlers(bot);
   LOG("Handlers registered");
   registerCallbacks(bot);

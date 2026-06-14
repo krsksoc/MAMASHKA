@@ -24,8 +24,14 @@ export async function handleAdmin(ctx: Context): Promise<void> {
   switch (command) {
     case "summary": {
       await ctx.reply("⏳ Собираю последние 1000 сообщений...");
-      const summary = await generateMamoolyaNews(chatId, 1000);
-      await ctx.reply(summary);
+      try {
+        const summary = await generateMamoolyaNews(chatId, 1000);
+        await ctx.reply(summary);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[ADMIN] summary error for chat=${chatId}:`, msg);
+        await ctx.reply("❌ Ошибка генерации саммари: " + msg.slice(0, 200));
+      }
       break;
     }
     case "summary_week": {

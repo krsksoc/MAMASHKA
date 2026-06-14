@@ -12,6 +12,7 @@ export async function handleStats(ctx: Context): Promise<void> {
   const fromId = ctx.from?.id;
 
   switch (command) {
+    case "stats":
     case "my_stats": {
       if (!fromId) return;
       const user = getUserByTelegramId(fromId, chatId);

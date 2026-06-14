@@ -2,7 +2,8 @@ import type { Bot, Context } from "grammy";
 import { generateMamoolyaNews } from "../services/summary.js";
 import { getAdminIds, getConfig } from "../core/config.js";
 import { formatBold, formatRank, formatUserName } from "./formatters/index.js";
-import { getTopUsers } from "../services/stats.js";
+import { getTopUsers, getUserMessageCount } from "../services/stats.js";
+import { getUserByTelegramId } from "../data/repos/users.js";
 
 const WEBAPP_URL = "https://maman.krsksoc.pwtr.dev/?v=3";
 
@@ -80,7 +81,23 @@ export async function handleCallback(ctx: Context): Promise<void> {
     // === Main menu items ===
     case "menu_my_stats": {
       await ctx.answerCallbackQuery("📊 Собираю статистику...");
-      await ctx.reply(`${formatBold("Твоя статистика")}\n\nПока нет данных.`);
+      const fromId = ctx.from?.id;
+      if (!fromId) {
+        await ctx.reply("Не удалось определить пользователя.");
+        return;
+      }
+      const user = getUserByTelegramId(fromId, chatId);
+      if (!user) {
+        await ctx.reply("Я тебя не знаю. Напиши что-нибудь сначала.");
+        return;
+      }
+      const messages = getUserMessageCount(chatId, user.id);
+      await ctx.reply(
+        `${formatBold("Твоя статистика")}\n\n` +
+        `✉️ Сообщений: ${messages}\n` +
+        `🏷 Ник: ${user.displayName ?? "—"}\n` +
+        `📛 Юзернейм: @${user.username ?? "—"}`
+      );
       break;
     }
     case "menu_top_nolifers": {
