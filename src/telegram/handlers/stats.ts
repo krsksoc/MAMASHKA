@@ -12,7 +12,32 @@ export async function handleStats(ctx: Context): Promise<void> {
   const fromId = ctx.from?.id;
 
   switch (command) {
-    case "stats":
+    case "stats": {
+      const { getChatStats } = await import("../../services/stats.js");
+      const stats = getChatStats(chatId);
+      let msg = `${formatBold("📊 Статистика чата")}\n\n` +
+        `👥 Участников: ${stats.totalUsers}\n` +
+        `💬 Всего сообщений: ${stats.totalMessages}\n` +
+        `📈 За 24ч: ${stats.messages24h}\n\n`;
+
+      if (stats.topUsers.length > 0) {
+        msg += `${formatBold("🏆 Топ-3")}\n`;
+        msg += stats.topUsers.map(
+          (u, i) => `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`
+        ).join("\n");
+        msg += "\n\n";
+      }
+
+      if (stats.topStickers.length > 0) {
+        msg += `${formatBold("🎭 Топ стикеров")}\n`;
+        msg += stats.topStickers.map(
+          (s, i) => `${formatRank(i + 1)} ${s.emoji} — ${s.count}`
+        ).join("\n");
+      }
+
+      await ctx.reply(msg);
+      break;
+    }
     case "my_stats": {
       if (!fromId) return;
       const user = getUserByTelegramId(fromId, chatId);

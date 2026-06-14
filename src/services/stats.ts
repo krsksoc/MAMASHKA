@@ -1,5 +1,6 @@
 import { getChatMessages } from "../data/repos/messages.js";
 import { getUser, getUsersByChat } from "../data/repos/users.js";
+import { getDb } from "../data/db.js";
 
 export interface UserStats {
   userId: number;
@@ -7,6 +8,14 @@ export interface UserStats {
   displayName: string | null;
   messageCount: number;
   reputation: number;
+}
+
+export interface ChatStats {
+  totalUsers: number;
+  totalMessages: number;
+  messages24h: number;
+  topUsers: UserStats[];
+  topStickers: Array<{ emoji: string; count: number }>;
 }
 
 export function getTopUsers(chatId: number, limit: number): UserStats[] {
@@ -40,4 +49,35 @@ export function getStickerStats(
 export function getUserMessageCount(_chatId: number, userId: number): number {
   const user = getUser(userId);
   return user?.messageCount ?? 0;
+}
+
+export function getChatStats(chatId: number): ChatStats {
+  const db = getDb();
+
+  // Total users
+  const totalUsers = (
+    db.prepare("SELECT COUNT(DISTINCT user_id) AS cnt FROM user_chats WHERE chat_id = ?").get(chatId) as { cnt: number }
+  )?.cnt ?? 0;
+
+  // Total messages in chat
+  const totalMessages = (
+    db.prepare("SELECT COUNT(*) AS cnt FROM messages WHERE chat_id = ?").get(chatId) as { cnt: number }
+  )?.cnt ?? 0;
+
+  // Messages in last 24h
+  const yesterday = new Date(Date.now() - 86400000).toISOString();
+  const messages24h = (
+    db.prepare("SELECT COUNT(*) AS cnt FROM messages WHERE chat_id = ? AND created_at > ?").get(
+      chatId,
+      yesterday,
+    ) as { cnt: number }
+  )?.cnt ?? 0;
+
+  // Top users
+  const topUsers = getTopUsers(chatId, 3);
+
+  // Top stickers
+  const topStickers = getStickerStats(chatId, 3);
+
+  return { totalUsers, totalMessages, messages24h, topUsers, topStickers };
 }
