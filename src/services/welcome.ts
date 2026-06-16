@@ -294,14 +294,12 @@ export async function handleNewChatMembers(ctx: Context): Promise<void> {
     if (!user) continue;
 
     const welcome = buildNewWelcome(name, topic);
-    const questionsText = QUESTIONS.map((q, i) => `${i + 1}. ${q.text}`).join("\n");
-    const fullWelcome = `${welcome}\n\n${formatBold("Расскажи о себе:")}\n${formatItalic(questionsText)}\n\n${formatItalic("Отвечай по одному — или не отвечай, мы всё равно примем.")}`;
-    await ctx.reply(fullWelcome, { parse_mode: "HTML" });
-    LOG(`Welcomed new user ${member.id} (${name}) with all questions`);
+    await ctx.reply(welcome, { parse_mode: "HTML" });
+    LOG(`Welcomed new user ${member.id} (${name})`);
 
-    // Mark user as new, intro incomplete, reset step
+    // Mark user as seen, no intro questions
     const db = (await import("../data/db.js")).getDb();
-    db.prepare("UPDATE users SET is_new = 1, intro_completed = 0, intro_step = 0, first_seen_at = datetime('now') WHERE id = ?").run(user.id);
+    db.prepare("UPDATE users SET is_new = 1, intro_completed = 1, intro_step = 99, first_seen_at = datetime('now') WHERE id = ?").run(user.id);
   }
 }
 
