@@ -35,7 +35,7 @@ function sortedParams(params: Record<string, string>): string {
 
 export function validateInitData(initData: string, botToken: string): WebAppUser | null {
   const params = parseQueryString(initData);
-  const hash = params["hash"];
+  const hash = params.hash;
   if (!hash) return null;
 
   const dataCheckString = sortedParams(params);
@@ -44,7 +44,7 @@ export function validateInitData(initData: string, botToken: string): WebAppUser
 
   if (calculatedHash !== hash) return null;
 
-  const userStr = params["user"];
+  const userStr = params.user;
   if (!userStr) return null;
 
   try {

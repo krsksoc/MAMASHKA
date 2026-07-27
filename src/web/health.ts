@@ -32,17 +32,15 @@ export function getHealthData(): HealthData {
     // ignore
   }
   try {
-    walSize = statSync(config.DB_PATH + "-wal").size;
+    walSize = statSync(`${config.DB_PATH}-wal`).size;
   } catch {
     // ignore
   }
 
-  const messagesRow = db.prepare("SELECT COUNT(*) as cnt FROM messages").get() as
-    | { cnt: number }
-    | null;
-  const usersRow = db.prepare("SELECT COUNT(*) as cnt FROM users").get() as
-    | { cnt: number }
-    | null;
+  const messagesRow = db.prepare("SELECT COUNT(*) as cnt FROM messages").get() as {
+    cnt: number;
+  } | null;
+  const usersRow = db.prepare("SELECT COUNT(*) as cnt FROM users").get() as { cnt: number } | null;
 
   const providers: Record<string, { configured: boolean }> = {
     wormsoft: { configured: !!config.WORM_KEY },

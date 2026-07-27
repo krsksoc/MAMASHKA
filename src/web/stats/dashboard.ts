@@ -33,7 +33,11 @@ export function getStatsData() {
       ORDER BY message_count DESC
       LIMIT 20
     `)
-    .all() as Array<{ display_name: string | null; username: string | null; message_count: number }>;
+    .all() as Array<{
+    display_name: string | null;
+    username: string | null;
+    message_count: number;
+  }>;
 
   // Messages by weekday (last 30 days)
   const weekdayRows = db
@@ -51,7 +55,7 @@ export function getStatsData() {
   const totalUsers = db.prepare("SELECT COUNT(*) as cnt FROM users").get() as { cnt: number };
 
   return {
-    messagesByHour: hourRows.map((r) => ({ hour: r.hour + ":00", count: r.cnt })),
+    messagesByHour: hourRows.map((r) => ({ hour: `${r.hour}:00`, count: r.cnt })),
     userGrowth: growthRows.map((r) => ({ date: r.dt, count: r.cnt })),
     topUsers: topRows.map((r) => ({
       name: r.display_name ?? r.username ?? "Unknown",

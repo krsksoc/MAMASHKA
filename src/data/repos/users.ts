@@ -7,32 +7,28 @@ function isRecord(val: unknown): val is Record<string, unknown> {
 
 function rowToUser(row: Record<string, unknown>): User {
   return {
-    id: Number(row["id"]),
-    telegramId: Number(row["telegram_id"]),
-    chatId: Number(row["chat_id"]),
-    username: typeof row["username"] === "string" ? row["username"] : null,
-    displayName: typeof row["display_name"] === "string" ? row["display_name"] : null,
-    firstSeenAt: typeof row["first_seen_at"] === "string" ? row["first_seen_at"] : "",
-    lastMessageAt: typeof row["last_message_at"] === "string" ? row["last_message_at"] : null,
-    isIgnored: Number(row["is_ignored"]) === 1,
-    messageCount: Number(row["message_count"]),
+    id: Number(row.id),
+    telegramId: Number(row.telegram_id),
+    chatId: Number(row.chat_id),
+    username: typeof row.username === "string" ? row.username : null,
+    displayName: typeof row.display_name === "string" ? row.display_name : null,
+    firstSeenAt: typeof row.first_seen_at === "string" ? row.first_seen_at : "",
+    lastMessageAt: typeof row.last_message_at === "string" ? row.last_message_at : null,
+    isIgnored: Number(row.is_ignored) === 1,
+    messageCount: Number(row.message_count),
     birthYear:
-      row["birth_year"] !== undefined && row["birth_year"] !== null
-        ? Number(row["birth_year"])
-        : null,
+      row.birth_year !== undefined && row.birth_year !== null ? Number(row.birth_year) : null,
     birthMonth:
-      row["birth_month"] !== undefined && row["birth_month"] !== null
-        ? Number(row["birth_month"])
-        : null,
-    isNew: Number(row["is_new"]) === 1,
-    introCompleted: Number(row["intro_completed"]) === 1,
-    introStep: Number(row["intro_step"]) || 0,
-    famousFor: typeof row["famous_for"] === "string" ? row["famous_for"] : null,
-    genderRole: typeof row["gender_role"] === "string" ? row["gender_role"] : null,
-    age: row["age"] !== undefined && row["age"] !== null ? Number(row["age"]) : null,
-    lifestyle: typeof row["lifestyle"] === "string" ? row["lifestyle"] : null,
-    morals: typeof row["morals"] === "string" ? row["morals"] : null,
-    sexRole: typeof row["sex_role"] === "string" ? row["sex_role"] : null,
+      row.birth_month !== undefined && row.birth_month !== null ? Number(row.birth_month) : null,
+    isNew: Number(row.is_new) === 1,
+    introCompleted: Number(row.intro_completed) === 1,
+    introStep: Number(row.intro_step) || 0,
+    famousFor: typeof row.famous_for === "string" ? row.famous_for : null,
+    genderRole: typeof row.gender_role === "string" ? row.gender_role : null,
+    age: row.age !== undefined && row.age !== null ? Number(row.age) : null,
+    lifestyle: typeof row.lifestyle === "string" ? row.lifestyle : null,
+    morals: typeof row.morals === "string" ? row.morals : null,
+    sexRole: typeof row.sex_role === "string" ? row.sex_role : null,
   };
 }
 
@@ -110,7 +106,7 @@ export function isUserIgnored(userId: number): boolean {
   if (!isRecord(row)) {
     return false;
   }
-  return Number(row["is_ignored"]) === 1;
+  return Number(row.is_ignored) === 1;
 }
 
 export function setIgnored(userId: number, ignored: boolean): void {

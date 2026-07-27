@@ -12,7 +12,7 @@ export interface ModifierResult {
 
 function parseTimeRange(value: string): { start: number; end: number } | null {
   const m = value.match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
-  if (!m || !m[1] || !m[2] || !m[3] || !m[4]) return null;
+  if (!m?.[1] || !m[2] || !m[3] || !m[4]) return null;
   return {
     start: parseInt(m[1], 10) * 60 + parseInt(m[2], 10),
     end: parseInt(m[3], 10) * 60 + parseInt(m[4], 10),
@@ -30,7 +30,7 @@ function checkTimeRange(range: { start: number; end: number }): boolean {
 
 function checkReputationRange(value: string, userRep: number): boolean {
   const m = value.match(/^(-?\d+)(?:-(-?\d+))?$/);
-  if (!m || !m[1]) return false;
+  if (!m?.[1]) return false;
   const min = parseInt(m[1], 10);
   const max = m[2] !== undefined && m[2] !== undefined ? parseInt(m[2], 10) : min;
   return userRep >= min && userRep <= max;

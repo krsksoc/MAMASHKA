@@ -41,7 +41,7 @@ export function getDb(): Database {
   if (rows && Array.isArray(rows)) {
     for (const row of rows) {
       if (isRecord(row) && "name" in row) {
-        const nameVal = row["name"];
+        const nameVal = row.name;
         if (typeof nameVal === "string") {
           applied.add(nameVal);
         }

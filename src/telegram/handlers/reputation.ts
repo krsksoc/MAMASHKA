@@ -7,7 +7,7 @@ export async function handleReputation(ctx: Context): Promise<void> {
   const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const m = text.match(/^\/([a-zA-Z0-9_]+)/);
   let command = m ? (m[1] ?? "") : "";
-  if (command.includes("@")) command = command.split("@")[0]!;
+  if (command.includes("@")) command = command.split("@")[0] ?? command;
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
@@ -29,7 +29,7 @@ export async function handleReputation(ctx: Context): Promise<void> {
         (u, i) =>
           `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} ${formatReputation(u.reputation)}`,
       );
-      await ctx.reply(formatBold("Топ репутации") + "\n\n" + lines.join("\n"));
+      await ctx.reply(`${formatBold("Топ репутации")}\n\n${lines.join("\n")}`);
       break;
     }
     case "days_without_drama": {

@@ -38,14 +38,9 @@ export function rateLimitMiddleware() {
 
     bucket.count++;
     if (bucket.count > limit) {
-      // Silently drop or reply with cooldown
       const remaining = Math.ceil((bucket.windowStart + windowMs - now) / 1000);
       console.error(`[RATE LIMIT] user=${userId} exceeded ${limit}/min, cooldown ${remaining}s`);
-      if (ctx.message || ctx.callbackQuery) {
-        await ctx.reply(`⏳ Слишком быстро. Подожди ${remaining}с.`, {
-          reply_to_message_id: ctx.message?.message_id,
-        });
-      }
+      // Silent drop — no reply to avoid spam loop
       return;
     }
 
@@ -54,12 +49,15 @@ export function rateLimitMiddleware() {
 }
 
 // Cleanup old buckets every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const cutoff = 2 * 60 * 1000; // remove after 2 min of inactivity
-  for (const [userId, bucket] of buckets) {
-    if (now - bucket.windowStart > cutoff) {
-      buckets.delete(userId);
+setInterval(
+  () => {
+    const now = Date.now();
+    const cutoff = 2 * 60 * 1000; // remove after 2 min of inactivity
+    for (const [userId, bucket] of buckets) {
+      if (now - bucket.windowStart > cutoff) {
+        buckets.delete(userId);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000,
+);

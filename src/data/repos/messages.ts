@@ -7,16 +7,15 @@ function isRecord(val: unknown): val is Record<string, unknown> {
 
 function rowToMessage(row: Record<string, unknown>): Message {
   return {
-    id: Number(row["id"]),
-    chatId: Number(row["chat_id"]),
-    userId: Number(row["user_id"]),
-    telegramMessageId:
-      typeof row["telegram_message_id"] === "number" ? row["telegram_message_id"] : null,
-    text: typeof row["text"] === "string" ? row["text"] : null,
-    hasSticker: Number(row["has_sticker"]) === 1,
-    stickerEmoji: typeof row["sticker_emoji"] === "string" ? row["sticker_emoji"] : null,
-    replyToUserId: typeof row["reply_to_user_id"] === "number" ? row["reply_to_user_id"] : null,
-    createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
+    id: Number(row.id),
+    chatId: Number(row.chat_id),
+    userId: Number(row.user_id),
+    telegramMessageId: typeof row.telegram_message_id === "number" ? row.telegram_message_id : null,
+    text: typeof row.text === "string" ? row.text : null,
+    hasSticker: Number(row.has_sticker) === 1,
+    stickerEmoji: typeof row.sticker_emoji === "string" ? row.sticker_emoji : null,
+    replyToUserId: typeof row.reply_to_user_id === "number" ? row.reply_to_user_id : null,
+    createdAt: typeof row.created_at === "string" ? row.created_at : "",
   };
 }
 
@@ -101,11 +100,11 @@ export function getChatMessagesWithUsers(chatId: number, limit: number): Message
   return rows
     .filter(isRecord)
     .map((row) => ({
-      text: typeof row["text"] === "string" ? row["text"] : null,
-      createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
-      userId: Number(row["user_id"]),
-      username: typeof row["username"] === "string" ? row["username"] : null,
-      displayName: typeof row["display_name"] === "string" ? row["display_name"] : null,
+      text: typeof row.text === "string" ? row.text : null,
+      createdAt: typeof row.created_at === "string" ? row.created_at : "",
+      userId: Number(row.user_id),
+      username: typeof row.username === "string" ? row.username : null,
+      displayName: typeof row.display_name === "string" ? row.display_name : null,
     }))
     .reverse(); // reverse back to chronological for summary
 }

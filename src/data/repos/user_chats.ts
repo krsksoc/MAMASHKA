@@ -20,16 +20,18 @@ export function touchUserChat(userId: number, chatId: number, chatTitle: string 
     .get(userId, chatId);
   if (!existing) {
     db.prepare(
-      "INSERT INTO user_chats (user_id, chat_id, chat_title, first_seen_at, last_active_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))"
+      "INSERT INTO user_chats (user_id, chat_id, chat_title, first_seen_at, last_active_at) VALUES (?, ?, ?, datetime('now'), datetime('now'))",
     ).run(userId, chatId, chatTitle);
   } else {
     db.prepare(
-      "UPDATE user_chats SET chat_title = ?, last_active_at = datetime('now') WHERE user_id = ? AND chat_id = ?"
+      "UPDATE user_chats SET chat_title = ?, last_active_at = datetime('now') WHERE user_id = ? AND chat_id = ?",
     ).run(chatTitle, userId, chatId);
   }
 }
 
-export function getUserChatsByTelegramId(telegramId: number): Array<{chat_id: number; chat_title: string | null; first_seen_at: string}> {
+export function getUserChatsByTelegramId(
+  telegramId: number,
+): Array<{ chat_id: number; chat_title: string | null; first_seen_at: string }> {
   const db = getDb();
   const rows = db
     .prepare(`
@@ -42,9 +44,9 @@ export function getUserChatsByTelegramId(telegramId: number): Array<{chat_id: nu
     .all(telegramId);
   if (!rows || !Array.isArray(rows)) return [];
   return rows.filter(isRecord).map((row) => ({
-    chat_id: Number(row["chat_id"]),
-    chat_title: typeof row["chat_title"] === "string" ? row["chat_title"] : null,
-    first_seen_at: typeof row["first_seen_at"] === "string" ? row["first_seen_at"] : "",
+    chat_id: Number(row.chat_id),
+    chat_title: typeof row.chat_title === "string" ? row.chat_title : null,
+    first_seen_at: typeof row.first_seen_at === "string" ? row.first_seen_at : "",
   }));
 }
 
@@ -55,11 +57,11 @@ export function getUserChats(userId: number): UserChat[] {
     .all(userId);
   if (!rows || !Array.isArray(rows)) return [];
   return rows.filter(isRecord).map((row) => ({
-    id: Number(row["id"]),
-    userId: Number(row["user_id"]),
-    chatId: Number(row["chat_id"]),
-    chatTitle: typeof row["chat_title"] === "string" ? row["chat_title"] : null,
-    firstSeenAt: typeof row["first_seen_at"] === "string" ? row["first_seen_at"] : "",
-    lastActiveAt: typeof row["last_active_at"] === "string" ? row["last_active_at"] : "",
+    id: Number(row.id),
+    userId: Number(row.user_id),
+    chatId: Number(row.chat_id),
+    chatTitle: typeof row.chat_title === "string" ? row.chat_title : null,
+    firstSeenAt: typeof row.first_seen_at === "string" ? row.first_seen_at : "",
+    lastActiveAt: typeof row.last_active_at === "string" ? row.last_active_at : "",
   }));
 }

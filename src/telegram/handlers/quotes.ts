@@ -6,7 +6,7 @@ import { formatBold } from "../formatters/index.js";
 export async function handleQuotes(ctx: Context): Promise<void> {
   const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const m = text.match(/^\/(\S+)/);
-  let command = m ? (m[1] ?? "").split("@")[0] : "";
+  const command = m ? (m[1] ?? "").split("@")[0] : "";
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
@@ -14,17 +14,12 @@ export async function handleQuotes(ctx: Context): Promise<void> {
     case "quote": {
       // Reply-to quote: save the quoted message text
       const replyTo = ctx.message?.reply_to_message;
-      if (replyTo && replyTo.text) {
+      if (replyTo?.text) {
         const author = replyTo.from;
         const savedBy = ctx.from;
         if (!savedBy) return;
         const authorUser = author
-          ? getOrCreateUser(
-              author.id,
-              chatId,
-              author.username ?? null,
-              author.first_name ?? null,
-            )
+          ? getOrCreateUser(author.id, chatId, author.username ?? null, author.first_name ?? null)
           : null;
         const saverUser = getOrCreateUser(
           savedBy.id,
@@ -70,7 +65,7 @@ export async function handleQuotes(ctx: Context): Promise<void> {
         return;
       }
       const lines = quotes.slice(0, 10).map((q) => `💬 "${q.text}"`);
-      await ctx.reply(formatBold("Цитаты чата") + "\n\n" + lines.join("\n"));
+      await ctx.reply(`${formatBold("Цитаты чата")}\n\n${lines.join("\n")}`);
       break;
     }
     case "randomquote": {

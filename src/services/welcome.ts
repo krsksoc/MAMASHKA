@@ -27,34 +27,38 @@ export function startMemberPolling(bot: any) {
   const rows = db.prepare("SELECT DISTINCT chat_id FROM users").all() as Array<{ chat_id: number }>;
   LOG(`Found ${rows.length} chats in DB for polling init`);
   for (const { chat_id } of rows) {
-    bot.api.getChatMemberCount(chat_id).then((count: number) => {
-      memberCountMap.set(chat_id, { count, names: new Map() });
-      LOG(`Init member count for chat ${chat_id}: ${count}`);
-    }).catch((e: unknown) => {
-      LOG(`Failed init count for chat ${chat_id}: ${String(e)}`);
-    });
+    bot.api
+      .getChatMemberCount(chat_id)
+      .then((count: number) => {
+        memberCountMap.set(chat_id, { count, names: new Map() });
+        LOG(`Init member count for chat ${chat_id}: ${count}`);
+      })
+      .catch((e: unknown) => {
+        LOG(`Failed init count for chat ${chat_id}: ${String(e)}`);
+      });
   }
   LOG("Starting 10s polling interval");
   pollingInterval = setInterval(async () => {
     const db2 = getDb();
-    const rows2 = db2.prepare("SELECT DISTINCT chat_id FROM users").all() as Array<{ chat_id: number }>;
+    const rows2 = db2.prepare("SELECT DISTINCT chat_id FROM users").all() as Array<{
+      chat_id: number;
+    }>;
     for (const { chat_id } of rows2) {
       try {
         const count = await bot.api.getChatMemberCount(chat_id);
         const prev = memberCountMap.get(chat_id);
         if (prev && count < prev.count) {
           // Wait for Telegram to update member status
-          await new Promise(r => setTimeout(r, 2000));
+          await new Promise((r) => setTimeout(r, 2000));
           const left = await findLeftMember(bot, chat_id);
           const farewell = randomFarewell();
-          const mention = left?.name.startsWith("@")
-            ? left.name
-            : (left ? left.name : null);
-          const text = mention
-            ? `${farewell}\n\nУшёл: ${mention}`
-            : farewell;
+          const mention = left?.name.startsWith("@") ? left.name : left ? left.name : null;
+          const text = mention ? `${farewell}\n\nУшёл: ${mention}` : farewell;
           await bot.api.sendMessage(chat_id, text, { parse_mode: "HTML" });
-          LOG(`Farewell in chat ${chat_id} (count ${prev.count} → ${count})` + (left ? ` user=${left.name}` : " unknown"));
+          LOG(
+            `Farewell in chat ${chat_id} (count ${prev.count} → ${count})` +
+              (left ? ` user=${left.name}` : " unknown"),
+          );
         }
         memberCountMap.set(chat_id, { count, names: new Map() });
       } catch (e) {
@@ -65,11 +69,14 @@ export function startMemberPolling(bot: any) {
   LOG("Polling interval started");
 }
 
-async function findLeftMember(bot: any, chatId: number): Promise<{ id: number; name: string } | null> {
+async function findLeftMember(
+  bot: any,
+  chatId: number,
+): Promise<{ id: number; name: string } | null> {
   const db = getDb();
-  const users = db.prepare(
-    "SELECT id, telegram_id, display_name, username FROM users WHERE chat_id = ?"
-  ).all(chatId) as Array<{
+  const users = db
+    .prepare("SELECT id, telegram_id, display_name, username FROM users WHERE chat_id = ?")
+    .all(chatId) as Array<{
     id: number;
     telegram_id: number;
     display_name: string | null;
@@ -82,15 +89,21 @@ async function findLeftMember(bot: any, chatId: number): Promise<{ id: number; n
       if (member.status === "left" || member.status === "kicked") {
         const name = user.username
           ? `@${user.username}`
-          : (user.display_name || `id${user.telegram_id}`);
+          : user.display_name || `id${user.telegram_id}`;
         return { id: user.id, name };
       }
     } catch (e) {
       const msg = String(e);
-      if (msg.includes("USER_NOT_FOUND") || msg.includes("user not found") || msg.includes("Chat not found") || msg.includes("USER_ID_INVALID") || msg.includes("Bad Request")) {
+      if (
+        msg.includes("USER_NOT_FOUND") ||
+        msg.includes("user not found") ||
+        msg.includes("Chat not found") ||
+        msg.includes("USER_ID_INVALID") ||
+        msg.includes("Bad Request")
+      ) {
         const name = user.username
           ? `@${user.username}`
-          : (user.display_name || `id${user.telegram_id}`);
+          : user.display_name || `id${user.telegram_id}`;
         return { id: user.id, name };
       }
     }
@@ -107,13 +120,15 @@ export function stopMemberPolling() {
 
 // ── Questions flow ──
 const QUESTIONS = [
-  { field: "famous_for", text: "Чем знаменит?" },
-  { field: "gender_role", text: "Тян? Кун?" },
-  { field: "age", text: "Годиков сколько?" },
-  { field: "lifestyle", text: "ЗОЖ или бухаешь?" },
-  { field: "morals", text: "Бабульку через дорогу переведёшь?" },
-  { field: "sex_role", text: "В жопу ебёшься или хуй сосёшь?" },
+  { field: "famousFor" as const, dbKey: "famous_for" as const, text: "Чем знаменит?" },
+  { field: "genderRole" as const, dbKey: "gender_role" as const, text: "Тян? Кун?" },
+  { field: "age" as const, dbKey: "age" as const, text: "Годиков сколько?" },
+  { field: "lifestyle" as const, dbKey: "lifestyle" as const, text: "ЗОЖ или бухаешь?" },
+  { field: "morals" as const, dbKey: "morals" as const, text: "Бабульку через дорогу переведёшь?" },
+  { field: "sexRole" as const, dbKey: "sex_role" as const, text: "В жопу ебёшься или хуй сосёшь?" },
 ] as const;
+
+type Question = (typeof QUESTIONS)[number];
 
 // ── Helpers ──
 function getDisplayName(member: {
@@ -207,7 +222,12 @@ export async function handleChatMember(ctx: Context): Promise<void> {
   const newStatus = newMember.status;
 
   if (newStatus === "left" || newStatus === "kicked") {
-    if (oldStatus === "member" || oldStatus === "administrator" || oldStatus === "creator" || oldStatus === "restricted") {
+    if (
+      oldStatus === "member" ||
+      oldStatus === "administrator" ||
+      oldStatus === "creator" ||
+      oldStatus === "restricted"
+    ) {
       // Fallback to DB if username not in update (privacy settings)
       let username = user.username;
       if (!username) {
@@ -216,18 +236,14 @@ export async function handleChatMember(ctx: Context): Promise<void> {
           username = dbUser.username;
         }
       }
-      const name = username
-        ? `@${username}`
-        : (user.first_name || `id${user.id}`);
+      const name = username ? `@${username}` : user.first_name || `id${user.id}`;
       const farewell = randomFarewell();
       const mention = name.startsWith("@")
-        ? name  // raw @username — clickable link, no markdown needed
+        ? name // raw @username — clickable link, no markdown needed
         : formatItalic(name);
-      await ctx.api.sendMessage(
-        chatMember.chat.id,
-        `${farewell}\n\nУшёл: ${mention}`,
-        { parse_mode: "HTML" },
-      );
+      await ctx.api.sendMessage(chatMember.chat.id, `${farewell}\n\nУшёл: ${mention}`, {
+        parse_mode: "HTML",
+      });
       LOG(`Farewell via chat_member for ${user.id} (${name})`);
     }
   }
@@ -299,13 +315,17 @@ export async function handleNewChatMembers(ctx: Context): Promise<void> {
 
     // Mark user as seen, no intro questions
     const db = (await import("../data/db.js")).getDb();
-    db.prepare("UPDATE users SET is_new = 1, intro_completed = 1, intro_step = 99, first_seen_at = datetime('now') WHERE id = ?").run(user.id);
+    db.prepare(
+      "UPDATE users SET is_new = 1, intro_completed = 1, intro_step = 99, first_seen_at = datetime('now') WHERE id = ?",
+    ).run(user.id);
   }
 }
 
 // ── Public: handle left_chat_member ──
 export async function handleLeftChatMember(ctx: Context): Promise<void> {
-  console.error(`[FAREWALL DEBUG] handler called, msg keys=${Object.keys(ctx.message ?? {}).join(",")}`);
+  console.error(
+    `[FAREWALL DEBUG] handler called, msg keys=${Object.keys(ctx.message ?? {}).join(",")}`,
+  );
   const msg = ctx.message;
   if (!msg || !("left_chat_member" in msg)) {
     console.error("[FAREWALL DEBUG] no left_chat_member in msg, returning");
@@ -340,12 +360,11 @@ async function askIntroQuestion(ctx: Context, userId: number, step: number): Pro
     return;
   }
 
-  const q = QUESTIONS[step];
-  const db = (await import("../data/db.js")).getDb();
-  db.prepare("UPDATE users SET intro_step = ? WHERE id = ?").run(step, userId);
+  const q: Question | undefined = QUESTIONS[step];
+  if (!q) return;
 
   await ctx.reply(formatItalic(q.text), { parse_mode: "HTML" });
-  LOG(`Asked question ${step} (${q.field}) to user ${userId}`);
+  LOG(`Asked question ${step} (${q.dbKey}) to user ${userId}`);
 }
 
 // ── Public: handle possible intro answer from text message ──
@@ -363,14 +382,15 @@ export async function handleIntroAnswer(ctx: Context): Promise<boolean> {
   // Check if text is a command — skip
   if (text.startsWith("/")) return false;
 
-  const step = (user.introStep) ?? 0;
+  const step = user.introStep ?? 0;
   if (step >= QUESTIONS.length) return false;
 
-  const q = QUESTIONS[step];
+  const q: Question | undefined = QUESTIONS[step];
+  if (!q) return false;
 
   // Skip if field already filled (shouldn't happen with proper flow, but safety)
-  const alreadyFilled =
-    user[q.field as keyof User] !== null && user[q.field as keyof User] !== undefined;
+  const field = q.field;
+  const alreadyFilled = user[field] !== null && user[field] !== undefined;
   if (alreadyFilled) {
     // Move to next unfilled
     const nextStep = findNextUnfilledStep(user, step + 1);
@@ -383,10 +403,10 @@ export async function handleIntroAnswer(ctx: Context): Promise<boolean> {
   }
 
   // Save answer
-  const value = q.field === "age" ? parseInt(text, 10) : text;
-  updateProfileField(user.id, q.field, Number.isNaN(value as number) ? text : value);
+  const value = q.dbKey === "age" ? parseInt(text, 10) : text;
+  updateProfileField(user.id, q.dbKey, Number.isNaN(value as number) ? text : value);
 
-  LOG(`Saved ${q.field}="${text}" for user ${user.id}`);
+  LOG(`Saved ${q.dbKey}="${text}" for user ${user.id}`);
 
   // Next question
   await askIntroQuestion(ctx, user.id, step + 1);
@@ -398,7 +418,7 @@ function findNextUnfilledStep(user: DbUser, startStep: number): number {
     const q = QUESTIONS[i];
     if (!q) continue;
     const field = q.field;
-    const val = user[field as keyof DbUser];
+    const val = user[field];
     if (val === null || val === undefined || val === "") return i;
   }
   return QUESTIONS.length;

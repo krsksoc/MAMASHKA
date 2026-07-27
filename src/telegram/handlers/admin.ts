@@ -30,7 +30,7 @@ export async function handleAdmin(ctx: Context): Promise<void> {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[ADMIN] summary error for chat=${chatId}:`, msg);
-        await ctx.reply("❌ Ошибка генерации саммари: " + msg.slice(0, 200));
+        await ctx.reply(`❌ Ошибка генерации саммари: ${msg.slice(0, 200)}`);
       }
       break;
     }
@@ -41,7 +41,7 @@ export async function handleAdmin(ctx: Context): Promise<void> {
       }
       await ctx.reply("⏳ Собираю саммари за неделю...");
       const summary = await generateMamoolyaNews(chatId, 500);
-      await ctx.reply(formatBold("Саммари за неделю") + "\n\n" + summary);
+      await ctx.reply(`${formatBold("Саммари за неделю")}\n\n${summary}`);
       break;
     }
     case "publish_anons": {

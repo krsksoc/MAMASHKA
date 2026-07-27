@@ -11,13 +11,13 @@ function isValidAnonStatus(val: unknown): val is AnonMessage["status"] {
 
 function rowToAnonMessage(row: Record<string, unknown>): AnonMessage {
   return {
-    id: Number(row["id"]),
-    chatId: Number(row["chat_id"]),
-    senderId: Number(row["sender_id"]),
-    text: typeof row["text"] === "string" ? row["text"] : "",
-    status: isValidAnonStatus(row["status"]) ? row["status"] : "pending",
-    publishedAt: typeof row["published_at"] === "string" ? row["published_at"] : null,
-    createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
+    id: Number(row.id),
+    chatId: Number(row.chat_id),
+    senderId: Number(row.sender_id),
+    text: typeof row.text === "string" ? row.text : "",
+    status: isValidAnonStatus(row.status) ? row.status : "pending",
+    publishedAt: typeof row.published_at === "string" ? row.published_at : null,
+    createdAt: typeof row.created_at === "string" ? row.created_at : "",
   };
 }
 

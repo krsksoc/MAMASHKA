@@ -11,15 +11,15 @@ function isValidVoteStatus(val: unknown): val is Vote["status"] {
 
 function rowToVote(row: Record<string, unknown>): Vote {
   return {
-    id: Number(row["id"]),
-    chatId: Number(row["chat_id"]),
-    type: typeof row["type"] === "string" ? row["type"] : "",
-    targetUserId: typeof row["target_user_id"] === "number" ? row["target_user_id"] : null,
-    initiatedBy: Number(row["initiated_by"]),
-    status: isValidVoteStatus(row["status"]) ? row["status"] : "active",
-    votesRequired: Number(row["votes_required"]),
-    expiresAt: typeof row["expires_at"] === "string" ? row["expires_at"] : "",
-    createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
+    id: Number(row.id),
+    chatId: Number(row.chat_id),
+    type: typeof row.type === "string" ? row.type : "",
+    targetUserId: typeof row.target_user_id === "number" ? row.target_user_id : null,
+    initiatedBy: Number(row.initiated_by),
+    status: isValidVoteStatus(row.status) ? row.status : "active",
+    votesRequired: Number(row.votes_required),
+    expiresAt: typeof row.expires_at === "string" ? row.expires_at : "",
+    createdAt: typeof row.created_at === "string" ? row.created_at : "",
   };
 }
 
@@ -73,7 +73,7 @@ export function getVoteCount(voteId: number, choice: "yes" | "no"): number {
   if (!isRecord(row)) {
     return 0;
   }
-  return Number(row["count"]);
+  return Number(row.count);
 }
 
 export function hasUserVoted(voteId: number, userId: number): boolean {

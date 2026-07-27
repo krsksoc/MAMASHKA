@@ -6,19 +6,18 @@ export async function handleHealth(ctx: Context): Promise<void> {
   const config = getConfig();
   const db = getDb();
 
-  const messagesRow = db.prepare("SELECT COUNT(*) as cnt FROM messages").get() as
-    | { cnt: number }
-    | null;
-  const usersRow = db.prepare("SELECT COUNT(*) as cnt FROM users").get() as
-    | { cnt: number }
-    | null;
+  const messagesRow = db.prepare("SELECT COUNT(*) as cnt FROM messages").get() as {
+    cnt: number;
+  } | null;
+  const usersRow = db.prepare("SELECT COUNT(*) as cnt FROM users").get() as { cnt: number } | null;
 
   const uptime = Math.floor(process.uptime());
-  const uptimeStr = uptime < 60
-    ? `${uptime}s`
-    : uptime < 3600
-      ? `${Math.floor(uptime / 60)}m`
-      : `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`;
+  const uptimeStr =
+    uptime < 60
+      ? `${uptime}s`
+      : uptime < 3600
+        ? `${Math.floor(uptime / 60)}m`
+        : `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`;
 
   const mem = process.memoryUsage();
   const rss = Math.round(mem.rss / 1024 / 1024);

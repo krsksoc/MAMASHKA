@@ -1,12 +1,12 @@
 import type { Context } from "grammy";
-import { getStickerStats, getTopUsers, getUserMessageCount } from "../../services/stats.js";
 import { getUserByTelegramId } from "../../data/repos/users.js";
+import { getStickerStats, getTopUsers, getUserMessageCount } from "../../services/stats.js";
 import { formatBold, formatRank, formatUserName } from "../formatters/index.js";
 
 export async function handleStats(ctx: Context): Promise<void> {
   const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const m = text.match(/^\/(\S+)/);
-  let command = m ? (m[1] ?? "").split("@")[0] : "";
+  const command = m ? (m[1] ?? "").split("@")[0] : "";
   const chatId = ctx.chat?.id;
   if (!chatId) return;
   const fromId = ctx.from?.id;
@@ -15,24 +15,28 @@ export async function handleStats(ctx: Context): Promise<void> {
     case "stats": {
       const { getChatStats } = await import("../../services/stats.js");
       const stats = getChatStats(chatId);
-      let msg = `${formatBold("📊 Статистика чата")}\n\n` +
+      let msg =
+        `${formatBold("📊 Статистика чата")}\n\n` +
         `👥 Участников: ${stats.totalUsers}\n` +
         `💬 Всего сообщений: ${stats.totalMessages}\n` +
         `📈 За 24ч: ${stats.messages24h}\n\n`;
 
       if (stats.topUsers.length > 0) {
         msg += `${formatBold("🏆 Топ-3")}\n`;
-        msg += stats.topUsers.map(
-          (u, i) => `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`
-        ).join("\n");
+        msg += stats.topUsers
+          .map(
+            (u, i) =>
+              `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`,
+          )
+          .join("\n");
         msg += "\n\n";
       }
 
       if (stats.topStickers.length > 0) {
         msg += `${formatBold("🎭 Топ стикеров")}\n`;
-        msg += stats.topStickers.map(
-          (s, i) => `${formatRank(i + 1)} ${s.emoji} — ${s.count}`
-        ).join("\n");
+        msg += stats.topStickers
+          .map((s, i) => `${formatRank(i + 1)} ${s.emoji} — ${s.count}`)
+          .join("\n");
       }
 
       await ctx.reply(msg);
@@ -48,9 +52,9 @@ export async function handleStats(ctx: Context): Promise<void> {
       const messages = getUserMessageCount(chatId, user.id);
       await ctx.reply(
         `${formatBold("Твоя статистика")}\n\n` +
-        `✉️ Сообщений: ${messages}\n` +
-        `🏷 Ник: ${user.displayName ?? "—"}\n` +
-        `📛 Юзернейм: @${user.username ?? "—"}`,
+          `✉️ Сообщений: ${messages}\n` +
+          `🏷 Ник: ${user.displayName ?? "—"}\n` +
+          `📛 Юзернейм: @${user.username ?? "—"}`,
       );
       break;
     }
@@ -65,7 +69,7 @@ export async function handleStats(ctx: Context): Promise<void> {
         (u, i) =>
           `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`,
       );
-      await ctx.reply(formatBold("Топ ноулайферов") + "\n\n" + lines.join("\n"));
+      await ctx.reply(`${formatBold("Топ ноулайферов")}\n\n${lines.join("\n")}`);
       break;
     }
     case "sticker_stats": {
@@ -75,7 +79,7 @@ export async function handleStats(ctx: Context): Promise<void> {
         return;
       }
       const lines = stats.map((s, i) => `${formatRank(i + 1)} ${s.emoji} — ${s.count}`);
-      await ctx.reply(formatBold("Топ стикеров") + "\n\n" + lines.join("\n"));
+      await ctx.reply(`${formatBold("Топ стикеров")}\n\n${lines.join("\n")}`);
       break;
     }
     default:

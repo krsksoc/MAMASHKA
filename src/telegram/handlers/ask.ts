@@ -17,18 +17,11 @@ export async function handleAsk(ctx: Context): Promise<void> {
 
   await ctx.reply("⏳ Думаю...");
   try {
-    const response = await generateReply(
-      chatId,
-      userId,
-      userName,
-      question,
-      null,
-      null,
-    );
+    const response = await generateReply(chatId, userId, userName, question, null, null);
     await ctx.reply(response);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[ASK] error:`, msg);
-    await ctx.reply("❌ Ошибка: " + msg.slice(0, 200));
+    await ctx.reply(`❌ Ошибка: ${msg.slice(0, 200)}`);
   }
 }

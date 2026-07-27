@@ -16,18 +16,23 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "error",
+        "noExplicitAny": "warn",
         "noDoubleEquals": "error",
-        "noEmptyBlockStatements": "error"
+        "noEmptyBlockStatements": "error",
+        "noAssignInExpressions": "warn",
+        "noConfusingVoidType": "warn"
       },
       "style": {
         "useConst": "error",
         "useImportType": "error",
-        "noParameterAssign": "error"
+        "noParameterAssign": "error",
+        "useNodejsImportProtocol": "warn",
+        "useTemplate": "warn"
       },
       "complexity": {
         "noUselessTypeConstraint": "error",
-        "noForEach": "off"
+        "noForEach": "off",
+        "useLiteralKeys": "warn"
       },
       "correctness": {
         "noUnusedImports": "error",

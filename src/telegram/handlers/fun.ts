@@ -15,7 +15,7 @@ export async function handleFun(ctx: Context): Promise<void> {
   const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
   const match = text.match(/^\/([a-zA-Z0-9_]+)/);
   let command = match ? (match[1] ?? "") : "";
-  if (command.includes("@")) command = command.split("@")[0]!;
+  if (command.includes("@")) command = command.split("@")[0] ?? command;
   console.error(`[FUN] text="${text}" cmd="${command}"`);
   const chatId = ctx.chat?.id;
   const userId = ctx.from?.id;

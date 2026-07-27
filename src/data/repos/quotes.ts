@@ -7,14 +7,13 @@ function isRecord(val: unknown): val is Record<string, unknown> {
 
 function rowToQuote(row: Record<string, unknown>): Quote {
   return {
-    id: Number(row["id"]),
-    chatId: Number(row["chat_id"]),
-    userId: Number(row["user_id"]),
-    text: typeof row["text"] === "string" ? row["text"] : "",
-    savedByUserId: typeof row["saved_by_user_id"] === "number" ? row["saved_by_user_id"] : null,
-    telegramMessageId:
-      typeof row["telegram_message_id"] === "number" ? row["telegram_message_id"] : null,
-    createdAt: typeof row["created_at"] === "string" ? row["created_at"] : "",
+    id: Number(row.id),
+    chatId: Number(row.chat_id),
+    userId: Number(row.user_id),
+    text: typeof row.text === "string" ? row.text : "",
+    savedByUserId: typeof row.saved_by_user_id === "number" ? row.saved_by_user_id : null,
+    telegramMessageId: typeof row.telegram_message_id === "number" ? row.telegram_message_id : null,
+    createdAt: typeof row.created_at === "string" ? row.created_at : "",
   };
 }
 
@@ -32,9 +31,7 @@ export function getRandomQuote(chatId: number): Quote | null {
 export function getAllQuotes(chatId: number): Quote[] {
   const db = getDb();
   const rows = db
-    .prepare(
-      "SELECT * FROM quotes WHERE chat_id = ? ORDER BY created_at DESC LIMIT 50",
-    )
+    .prepare("SELECT * FROM quotes WHERE chat_id = ? ORDER BY created_at DESC LIMIT 50")
     .all(chatId);
   if (!rows || !Array.isArray(rows)) {
     return [];

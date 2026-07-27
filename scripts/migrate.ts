@@ -10,7 +10,7 @@ function isMigrationRow(row: unknown): row is MigrationRow {
     typeof row === "object" &&
     row !== null &&
     "name" in row &&
-    typeof (row as Record<string, unknown>)["name"] === "string"
+    typeof (row as Record<string, unknown>).name === "string"
   );
 }
 

@@ -12,8 +12,8 @@ export function getDaysWithoutDrama(chatId: number): number {
   if (!isRecord(row)) {
     return 0;
   }
-  const lastDramaAt = typeof row["last_drama_at"] === "string" ? row["last_drama_at"] : null;
-  const recordDays = Number(row["record_days"]) || 0;
+  const lastDramaAt = typeof row.last_drama_at === "string" ? row.last_drama_at : null;
+  const recordDays = Number(row.record_days) || 0;
   if (!lastDramaAt) {
     return recordDays;
   }
@@ -31,7 +31,7 @@ export function recordDrama(chatId: number): void {
     .prepare("SELECT record_days FROM drama_tracker WHERE chat_id = ?")
     .get(chatId);
   if (existing) {
-    const current = Number((existing as Record<string, unknown>)["record_days"]) || 0;
+    const current = Number((existing as Record<string, unknown>).record_days) || 0;
     db.prepare("UPDATE drama_tracker SET last_drama_at = ?, record_days = ? WHERE chat_id = ?").run(
       now,
       current,

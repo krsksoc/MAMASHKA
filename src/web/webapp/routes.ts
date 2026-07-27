@@ -4,8 +4,8 @@ import { getConfig } from "../../core/config.js";
 import { getMyAnons, insertAnonMessage } from "../../data/repos/anon.js";
 import { getRandomQuote } from "../../data/repos/quotes.js";
 import { addReputationEvent, getReputationSummary } from "../../data/repos/reputation.js";
+import { getUserChatsByTelegramId } from "../../data/repos/user_chats.js";
 import { getActiveUsers, getUserByTelegramId } from "../../data/repos/users.js";
-import { getUserChats, getUserChatsByTelegramId } from "../../data/repos/user_chats.js";
 import { getUserMessageCount } from "../../services/stats.js";
 import { validateInitData } from "./auth.js";
 import { anonSendSchema, voteSchema } from "./schemas.js";
@@ -16,7 +16,7 @@ interface AuthContext {
   userId: number;
   telegramId: number;
   firstName: string;
-  username?: string;
+  username: string | undefined;
 }
 
 function authUser(c: Context): AuthContext | null {
@@ -39,7 +39,7 @@ function authUser(c: Context): AuthContext | null {
   };
 }
 
-app.use(async (c: Context, next: Next): Promise<Response | void> => {
+app.use(async (c: Context, next: Next): Promise<Response | undefined> => {
   const auth = authUser(c);
   if (auth === null) {
     c.status(401);
@@ -47,6 +47,7 @@ app.use(async (c: Context, next: Next): Promise<Response | void> => {
   }
   (c as unknown as Record<string, unknown>)["__auth"] = auth;
   await next();
+  return undefined;
 });
 
 function getAuth(c: Context): AuthContext {
@@ -56,8 +57,6 @@ function getAuth(c: Context): AuthContext {
 // Get user's chats
 app.get("/chats", (c) => {
   const auth = getAuth(c);
-  const dbUser = getUserByTelegramId(auth.telegramId, 0); // chatId 0 won't match
-  // Actually we need to find the user in any chat — we use user_chats table directly
   const chats = getUserChatsByTelegramId(auth.telegramId);
   return c.json({ chats });
 });

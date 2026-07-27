@@ -1,9 +1,9 @@
 import type { Bot, Context } from "grammy";
-import { generateMamoolyaNews } from "../services/summary.js";
 import { getAdminIds, getConfig } from "../core/config.js";
-import { formatBold, formatRank, formatUserName } from "./formatters/index.js";
-import { getTopUsers, getUserMessageCount } from "../services/stats.js";
 import { getUserByTelegramId } from "../data/repos/users.js";
+import { getTopUsers, getUserMessageCount } from "../services/stats.js";
+import { generateMamoolyaNews } from "../services/summary.js";
+import { formatBold, formatRank, formatUserName } from "./formatters/index.js";
 
 const WEBAPP_URL = "https://maman.krsksoc.pwtr.dev/?v=3";
 
@@ -55,15 +55,21 @@ const funMenuKeyboard = {
 };
 
 // Utility to answer callback and edit message
-async function answerAndEdit(ctx: Context, text: string, keyboard?: object) {
+async function answerAndEdit(
+  ctx: Context,
+  text: string,
+  keyboard?:
+    | { inline_keyboard: { text: string; callback_data?: string; url?: string }[][] }
+    | undefined,
+) {
   await ctx.answerCallbackQuery();
   if (ctx.callbackQuery?.message) {
     await ctx.editMessageText(text, {
       parse_mode: "HTML",
-      reply_markup: keyboard,
+      reply_markup: keyboard as any,
     });
   } else {
-    await ctx.reply(text, { parse_mode: "HTML", reply_markup: keyboard });
+    await ctx.reply(text, { parse_mode: "HTML", reply_markup: keyboard as any });
   }
 }
 
@@ -94,9 +100,9 @@ export async function handleCallback(ctx: Context): Promise<void> {
       const messages = getUserMessageCount(chatId, user.id);
       await ctx.reply(
         `${formatBold("Твоя статистика")}\n\n` +
-        `✉️ Сообщений: ${messages}\n` +
-        `🏷 Ник: ${user.displayName ?? "—"}\n` +
-        `📛 Юзернейм: @${user.username ?? "—"}`
+          `✉️ Сообщений: ${messages}\n` +
+          `🏷 Ник: ${user.displayName ?? "—"}\n` +
+          `📛 Юзернейм: @${user.username ?? "—"}`,
       );
       break;
     }
@@ -111,7 +117,7 @@ export async function handleCallback(ctx: Context): Promise<void> {
         (u, i) =>
           `${formatRank(i + 1)} ${formatUserName(u.username, u.displayName)} — ${u.messageCount} сообщ.`,
       );
-      await ctx.reply(formatBold("Топ ноулайферов") + "\n\n" + lines.join("\n"));
+      await ctx.reply(`${formatBold("Топ ноулайферов")}\n\n${lines.join("\n")}`);
       break;
     }
     case "menu_summary": {
@@ -122,9 +128,7 @@ export async function handleCallback(ctx: Context): Promise<void> {
       await ctx.answerCallbackQuery("⏳ Собираю саммари...");
       const summary = await generateMamoolyaNews(chatId, 1000);
       await ctx.reply(`💬 ${formatBold("Саммари чата")}\n\n${summary}`, {
-        reply_markup: {
-          inline_keyboard: [[{ text: "🔄 Ещё раз", callback_data: "menu_summary" }]],
-        },
+        reply_markup: mainMenuKeyboard,
       });
       break;
     }

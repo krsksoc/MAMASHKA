@@ -1,6 +1,6 @@
+import { getDb } from "../data/db.js";
 import { getChatMessages } from "../data/repos/messages.js";
 import { getUser, getUsersByChat } from "../data/repos/users.js";
-import { getDb } from "../data/db.js";
 
 export interface UserStats {
   userId: number;
@@ -55,23 +55,29 @@ export function getChatStats(chatId: number): ChatStats {
   const db = getDb();
 
   // Total users
-  const totalUsers = (
-    db.prepare("SELECT COUNT(DISTINCT user_id) AS cnt FROM user_chats WHERE chat_id = ?").get(chatId) as { cnt: number }
-  )?.cnt ?? 0;
+  const totalUsers =
+    (
+      db
+        .prepare("SELECT COUNT(DISTINCT user_id) AS cnt FROM user_chats WHERE chat_id = ?")
+        .get(chatId) as { cnt: number }
+    )?.cnt ?? 0;
 
   // Total messages in chat
-  const totalMessages = (
-    db.prepare("SELECT COUNT(*) AS cnt FROM messages WHERE chat_id = ?").get(chatId) as { cnt: number }
-  )?.cnt ?? 0;
+  const totalMessages =
+    (
+      db.prepare("SELECT COUNT(*) AS cnt FROM messages WHERE chat_id = ?").get(chatId) as {
+        cnt: number;
+      }
+    )?.cnt ?? 0;
 
   // Messages in last 24h
   const yesterday = new Date(Date.now() - 86400000).toISOString();
-  const messages24h = (
-    db.prepare("SELECT COUNT(*) AS cnt FROM messages WHERE chat_id = ? AND created_at > ?").get(
-      chatId,
-      yesterday,
-    ) as { cnt: number }
-  )?.cnt ?? 0;
+  const messages24h =
+    (
+      db
+        .prepare("SELECT COUNT(*) AS cnt FROM messages WHERE chat_id = ? AND created_at > ?")
+        .get(chatId, yesterday) as { cnt: number }
+    )?.cnt ?? 0;
 
   // Top users
   const topUsers = getTopUsers(chatId, 3);

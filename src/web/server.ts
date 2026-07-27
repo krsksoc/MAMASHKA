@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
-import { fileURLToPath } from "url";
 import { getConfig } from "../core/config.js";
 import { adminRoutes } from "./admin/routes.js";
-import { webappRoutes } from "./webapp/routes.js";
 import { getHealthData } from "./health.js";
 import { getStatsData, renderStatsPage } from "./stats/dashboard.js";
+import { webappRoutes } from "./webapp/routes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "../../public");

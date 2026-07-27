@@ -30,7 +30,7 @@ export function getReputation(chatId: number, userId: number): number {
   if (!isRecord(row)) {
     return 0;
   }
-  return Number(row["total"]);
+  return Number(row.total);
 }
 
 export function getReputationRanking(
@@ -52,8 +52,8 @@ export function getReputationRanking(
     return [];
   }
   return rows.filter(isRecord).map((row) => ({
-    userId: Number(row["userId"]),
-    reputation: Number(row["reputation"]),
+    userId: Number(row.userId),
+    reputation: Number(row.reputation),
   }));
 }
 
@@ -74,8 +74,8 @@ export function getReputationSummary(chatId: number, userId: number): Reputation
   }
   return {
     userId,
-    totalDelta: Number(row["total_delta"]),
-    friendCount: Number(row["friend_count"]),
-    foeCount: Number(row["foe_count"]),
+    totalDelta: Number(row.total_delta),
+    friendCount: Number(row.friend_count),
+    foeCount: Number(row.foe_count),
   };
 }
