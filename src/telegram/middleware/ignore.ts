@@ -1,5 +1,5 @@
 import type { Context } from "grammy";
-import { getOrCreateUser, isUserIgnored, getUserByTelegramId } from "../../data/repos/users.js";
+import { getUserByTelegramId, isUserIgnored } from "../../data/repos/users.js";
 
 type NextFunction = () => Promise<void>;
 
@@ -20,17 +20,7 @@ export function ignoreMiddleware() {
       return;
     }
 
-    // For messages, use getOrCreateUser (bumps stats as usual)
-    const user = getOrCreateUser(
-      ctx.from.id,
-      ctx.chat.id,
-      ctx.from.username ?? null,
-      ctx.from.first_name ?? null,
-    );
-    if (user && isUserIgnored(user.id)) {
-      return;
-    }
+    // For messages, defer to trackerMiddleware which creates the user and checks ignore
     await next();
   };
 }
-

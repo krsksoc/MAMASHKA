@@ -1,4 +1,3 @@
-import { getConfig } from "../core/config.js";
 import { LLMError } from "../core/errors.js";
 import type { LLMOptions, LLMRequest } from "../core/types.js";
 import type { LLMProvider } from "./provider.js";

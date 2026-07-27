@@ -1,7 +1,7 @@
 import { getConfig } from "./core/config.js";
 import { closeDb } from "./data/db.js";
+import { stopMemberPolling } from "./services/welcome.js";
 import { createBot } from "./telegram/bot.js";
-import { startMemberPolling, stopMemberPolling } from "./services/welcome.js";
 import webServer from "./web/server.js";
 
 async function main() {
@@ -11,12 +11,7 @@ async function main() {
     // Start Telegram bot
     const bot = createBot();
     bot.start({
-      allowed_updates: [
-        "message",
-        "chat_member",
-        "my_chat_member",
-        "callback_query",
-      ],
+      allowed_updates: ["message", "chat_member", "my_chat_member", "callback_query"],
     });
 
     // Start Hono web server on same process
@@ -59,7 +54,7 @@ async function main() {
   }
 }
 
-async function scanKnownChats(bot: import("grammy").Bot): Promise<void> {
+async function scanKnownChats(_bot: import("grammy").Bot): Promise<void> {
   // We can't enumerate all chats automatically in Telegram Bot API
   // This is a placeholder — users will be registered lazily via tracker middleware
   // when they send messages. For immediate scan, bot must be in the chat.

@@ -1,8 +1,13 @@
 import type { Context } from "grammy";
 import { Bot } from "grammy";
-import { handleChatMember, handleLeftChatMember, handleNewChatMembers, startMemberPolling, stopMemberPolling } from "../services/welcome.js";
 import { getConfig } from "../core/config.js";
+import {
+  handleChatMember,
+  handleLeftChatMember,
+  handleNewChatMembers,
+} from "../services/welcome.js";
 import { registerCallbacks } from "./callback-router.js";
+import { concurrencyMiddleware } from "./middleware/concurrency.js";
 import { ignoreMiddleware } from "./middleware/ignore.js";
 import { rateLimitMiddleware } from "./middleware/rate-limit.js";
 import { trackerMiddleware } from "./middleware/tracker.js";
@@ -14,7 +19,7 @@ const LOG = (msg: string) => {
 
 export function createBot(): Bot<Context> {
   const config = getConfig();
-  LOG("Creating bot with token: " + config.BOT_TOKEN.slice(0, 10) + "...");
+  LOG(`Creating bot with token: ${config.BOT_TOKEN.slice(0, 10)}...`);
   const bot = new Bot<Context>(config.BOT_TOKEN);
   LOG("Bot instance created");
 
@@ -28,11 +33,12 @@ export function createBot(): Bot<Context> {
 
   bot.use(ignoreMiddleware());
   LOG("Ignore middleware registered");
+  bot.use(concurrencyMiddleware());
+  LOG("Concurrency middleware registered");
   bot.use(trackerMiddleware());
   LOG("Tracker middleware registered");
   bot.use(async (ctx, next) => {
     const text = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : null;
-    // biome-ignore lint: debug
     console.error(`[UPDATE] text="${text}" chat=${ctx.chat?.id} from=${ctx.from?.id}`);
     await next();
   });
@@ -43,7 +49,7 @@ export function createBot(): Bot<Context> {
   // Reply to bot messages — LLM-powered conversation
   bot.on("message", async (ctx, next) => {
     const msg = ctx.message;
-    if (!msg || !msg.reply_to_message) {
+    if (!msg?.reply_to_message) {
       await next();
       return;
     }
@@ -66,11 +72,19 @@ export function createBot(): Bot<Context> {
     }
 
     const replyText = msg.reply_to_message.text ?? null;
-    const replyUserName = msg.reply_to_message.from?.first_name ?? msg.reply_to_message.from?.username ?? null;
+    const replyUserName =
+      msg.reply_to_message.from?.first_name ?? msg.reply_to_message.from?.username ?? null;
 
     try {
       const { generateReply } = await import("../services/llm_reply.js");
-      const response = await generateReply(chatId, userId, userName, text, replyText, replyUserName);
+      const response = await generateReply(
+        chatId,
+        userId,
+        userName,
+        text,
+        replyText,
+        replyUserName,
+      );
       await ctx.reply(response);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

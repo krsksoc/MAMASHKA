@@ -1,5 +1,4 @@
 import { getChatMessagesWithUsers } from "../data/repos/messages.js";
-import { getRecentMessages } from "../data/repos/messages.js";
 import { getUserByTelegramId } from "../data/repos/users.js";
 import { completeWithFallback, getChain } from "../llm/router.js";
 import { buildPromptRequest } from "../prompts/builder.js";

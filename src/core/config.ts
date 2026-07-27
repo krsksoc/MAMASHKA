@@ -33,39 +33,47 @@ export type Config = z.infer<typeof configSchema>;
 
 function parseEnv(): Config {
   const env = process.env;
-  let botToken = env["BOT_TOKEN"] ?? "";
-  if (!botToken && env["BOT_TOKEN_FILE"]) {
+  let botToken = env.BOT_TOKEN ?? "";
+  if (!botToken && env.BOT_TOKEN_FILE) {
     try {
-      botToken = readFileSync(env["BOT_TOKEN_FILE"], "utf-8").trim();
+      botToken = readFileSync(env.BOT_TOKEN_FILE, "utf-8").trim();
     } catch {
       // ignore
     }
   }
-  let adminSecret = env["ADMIN_SECRET"] ?? "";
-  if (!adminSecret && env["ADMIN_SECRET_FILE"]) {
+  let adminSecret = env.ADMIN_SECRET ?? "";
+  if (!adminSecret && env.ADMIN_SECRET_FILE) {
     try {
-      adminSecret = readFileSync(env["ADMIN_SECRET_FILE"], "utf-8").trim();
+      adminSecret = readFileSync(env.ADMIN_SECRET_FILE, "utf-8").trim();
+    } catch {
+      // ignore
+    }
+  }
+  let wormKey = env.WORM_KEY ?? "";
+  if (!wormKey && env.WORM_KEY_FILE) {
+    try {
+      wormKey = readFileSync(env.WORM_KEY_FILE, "utf-8").trim();
     } catch {
       // ignore
     }
   }
   const raw = {
     BOT_TOKEN: botToken,
-    ADMIN_IDS: env["ADMIN_IDS"] ?? "",
-    OPENAI_API_KEY: env["OPENAI_API_KEY"] ?? "",
-    OPENAI_MODEL: env["OPENAI_MODEL"] ?? "gpt-4o-mini",
-    ANTHROPIC_API_KEY: env["ANTHROPIC_API_KEY"] ?? "",
-    ANTHROPIC_MODEL: env["ANTHROPIC_MODEL"] ?? "claude-sonnet-4-20250514",
-    OPENROUTER_API_KEY: env["OPENROUTER_API_KEY"] ?? "",
-    OPENROUTER_MODEL: env["OPENROUTER_MODEL"] ?? "mistralai/mixtral-8x7b-instruct",
-    OLLAMA_BASE_URL: env["OLLAMA_BASE_URL"] ?? "http://localhost:11434",
-    OLLAMA_MODEL: env["OLLAMA_MODEL"] ?? "llama3",
-    WORM_KEY: env["WORM_KEY"] ?? "",
-    WORM_ENDPOINT: env["WORM_ENDPOINT"] ?? "https://ai.wormsoft.ru/api/gpt/v1",
-    PORT: env["PORT"] ?? "3000",
+    ADMIN_IDS: env.ADMIN_IDS ?? "",
+    OPENAI_API_KEY: env.OPENAI_API_KEY ?? "",
+    OPENAI_MODEL: env.OPENAI_MODEL ?? "gpt-4o-mini",
+    ANTHROPIC_API_KEY: env.ANTHROPIC_API_KEY ?? "",
+    ANTHROPIC_MODEL: env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514",
+    OPENROUTER_API_KEY: env.OPENROUTER_API_KEY ?? "",
+    OPENROUTER_MODEL: env.OPENROUTER_MODEL ?? "mistralai/mixtral-8x7b-instruct",
+    OLLAMA_BASE_URL: env.OLLAMA_BASE_URL ?? "http://localhost:11434",
+    OLLAMA_MODEL: env.OLLAMA_MODEL ?? "llama3",
+    WORM_KEY: wormKey,
+    WORM_ENDPOINT: env.WORM_ENDPOINT ?? "https://ai.wormsoft.ru/api/gpt/v1",
+    PORT: env.PORT ?? "3000",
     ADMIN_SECRET: adminSecret,
-    DB_PATH: env["DB_PATH"] ?? "data.db",
-    RATE_LIMIT_PER_MINUTE: env["RATE_LIMIT_PER_MINUTE"] ?? "10",
+    DB_PATH: env.DB_PATH ?? "data.db",
+    RATE_LIMIT_PER_MINUTE: env.RATE_LIMIT_PER_MINUTE ?? "10",
   };
 
   const result = configSchema.safeParse(raw);

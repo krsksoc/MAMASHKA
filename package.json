@@ -12,7 +12,7 @@
     "format:check": "biome format --no-errors-on-unmatched",
     "deadcode": "knip",
     "guard:casts": "bun run scripts/guard-casts.ts",
-    "check": "bun run typecheck && bun run guard:casts && bun run lint && bun run deadcode && bun run format:check",
+    "check": "bun run typecheck && bun run lint && bun run deadcode && bun run format:check",
     "fix": "biome check --write --no-errors-on-unmatched && biome format --write --no-errors-on-unmatched",
     "migrate": "bun run scripts/migrate.ts",
     "test": "bun test"

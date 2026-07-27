@@ -1,7 +1,7 @@
 import type { Context } from "grammy";
 import { insertMessage } from "../../data/repos/messages.js";
 import { touchUserChat } from "../../data/repos/user_chats.js";
-import { getOrCreateUser, updateBirthDate } from "../../data/repos/users.js";
+import { getOrCreateUser, isUserIgnored } from "../../data/repos/users.js";
 import { handleIntroAnswer } from "../../services/welcome.js";
 
 type NextFunction = () => Promise<void>;
@@ -23,6 +23,13 @@ export function trackerMiddleware() {
 
     const user = getOrCreateUser(telegramId, chatId, username, displayName);
 
+    // Check ignore flag before tracking this message
+    if (user && isUserIgnored(user.id)) {
+      console.error(`[TRACKER] user=${user.id} is ignored, skipping`);
+      await next();
+      return;
+    }
+
     // Track user's chat membership for WebApp
     const chatTitle = ctx.chat.type === "private" ? null : (ctx.chat.title ?? null);
     if (user) {
@@ -43,7 +50,7 @@ export function trackerMiddleware() {
         msg && "sticker" in msg && msg.sticker?.emoji ? msg.sticker.emoji : null;
       const replyToMsg = msg && "reply_to_message" in msg ? msg.reply_to_message : null;
       let replyToUserId: number | null = null;
-      if (replyToMsg && replyToMsg.from) {
+      if (replyToMsg?.from) {
         const replyUser = getOrCreateUser(
           replyToMsg.from.id,
           chatId,

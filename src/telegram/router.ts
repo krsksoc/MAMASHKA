@@ -1,5 +1,6 @@
 import type { Bot, Context } from "grammy";
 import { handleAdmin } from "./handlers/admin.js";
+import { handleAsk } from "./handlers/ask.js";
 import { handleFun } from "./handlers/fun.js";
 import { handleHealth } from "./handlers/health.js";
 import { handleMisc } from "./handlers/misc.js";
@@ -31,6 +32,7 @@ export function registerHandlers(bot: Bot<Context>): void {
   bot.command("quotes", handleQuotes);
   bot.command("randomquote", handleQuotes);
   bot.command("summary", handleAdmin);
+  bot.command("ask", handleAsk);
   bot.command("summary_week", adminOnly(), handleAdmin);
   bot.command("ban_vote", adminOnly(), handleAdmin);
   bot.command("publish_anons", adminOnly(), handleAdmin);
