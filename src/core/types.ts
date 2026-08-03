@@ -20,6 +20,17 @@ export interface User {
   lifestyle: string | null;
   morals: string | null;
   sexRole: string | null;
+  /**
+   * Cached Telegram profile photo URL (api.telegram.org/file/bot<TOKEN>/<path>).
+   * Populated lazily on first swipe; refreshed after 24h.
+   * null if user has no profile photo or fetch failed.
+   */
+  avatarUrl: string | null;
+  /**
+   * ISO datetime of the last successful avatar refresh.
+   * null if avatar has never been fetched (e.g. legacy users).
+   */
+  avatarUpdatedAt: string | null;
 }
 
 // Message from DB

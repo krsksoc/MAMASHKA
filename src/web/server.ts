@@ -45,6 +45,22 @@ app.use("/webapp/*", async (c, next) => {
   }
 });
 
+// Public avatar proxy — serves Telegram profile photos cached on disk.
+// Lives at /avatar/:userId (no /webapp prefix) so the frontend can use it
+// directly without validateInitData. The data is not sensitive — these are
+// already public Telegram photos.
+app.get("/avatar/:userId", async (c) => {
+  const userId = parseInt(c.req.param("userId") ?? "0", 10);
+  if (!userId) return c.text("bad userId", 400);
+  const { getAvatarFile } = await import("../services/avatarProxy.js");
+  const file = await getAvatarFile(userId);
+  if (!file) return c.text("not found", 404);
+  // Cache for 7 days; align with PROXY_TTL_MS in avatarProxy.ts
+  c.header("Cache-Control", "public, max-age=604800, immutable");
+  c.header("Content-Type", file.contentType);
+  return c.body(file.body);
+});
+
 app.route("/admin", adminRoutes);
 app.route("/webapp", webappRoutes);
 

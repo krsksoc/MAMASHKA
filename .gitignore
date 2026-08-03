@@ -8,3 +8,6 @@ ssl/
 public/
 run.sh.bak
 test_*.ts
+*.db-shm
+*.db-wal
+data/

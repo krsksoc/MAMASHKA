@@ -8,7 +8,9 @@ import {
   rollDice,
   spinBottle,
 } from "../../services/entertainment.js";
+import { imitateUser } from "../../services/imitation.js";
 import { getUserReputation } from "../../services/reputation.js";
+import { getUserByUsername } from "../../data/repos/users.js";
 
 export async function handleFun(ctx: Context): Promise<void> {
   // Parse command name from message text (ctx.match is argument only)
@@ -63,6 +65,41 @@ export async function handleFun(ctx: Context): Promise<void> {
     case "bottle": {
       const result = await spinBottle(userName, ["Анна", "Борис", "Вика"]);
       await ctx.reply(result);
+      break;
+    }
+    case "imitate": {
+      if (!userId) return;
+      const msg = ctx.message && typeof ctx.message.text === "string" ? ctx.message.text : "";
+      // /imitate @username — extract username (or reply-to author if no arg).
+      const m = msg.match(/^\/imitate(?:@\S+)?\s*(.*)$/);
+      const arg = m ? (m[1] ?? "").trim() : "";
+      let target = null;
+      if (arg) {
+        target = getUserByUsername(chatId, arg);
+      } else {
+        // No arg — try reply-to user.
+        const reply = ctx.message && "reply_to_message" in ctx.message
+          ? ctx.message.reply_to_message
+          : null;
+        const replyFrom = reply && "from" in reply ? reply.from : null;
+        if (replyFrom) {
+          const { getUserByTelegramId } = await import("../../data/repos/users.js");
+          target = getUserByTelegramId(replyFrom.id, chatId);
+        }
+      }
+      if (!target) {
+        await ctx.reply(
+          "👤 <b>Имитация</b>\n\n" +
+            "Использование:\n" +
+            "• <code>/imitate @username</code> — стиль юзера\n" +
+            "• Ответь на сообщение юзера командой <code>/imitate</code>",
+          { parse_mode: "HTML" },
+        );
+        return;
+      }
+      const prompt = arg || "Напиши что-нибудь в стиле этого юзера";
+      const im = await imitateUser(target.id, chatId, userName, prompt);
+      await ctx.reply(im);
       break;
     }
     default:

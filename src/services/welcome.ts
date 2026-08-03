@@ -2,7 +2,7 @@ import type { Context } from "grammy";
 import type { User as DbUser } from "../core/types.js";
 import { getDb } from "../data/db.js";
 import {
-  getOrCreateUser,
+  getOrCreateUserNoBump,
   getUserByTelegramId,
   markIntroCompleted,
   registerExistingUser,
@@ -306,17 +306,19 @@ export async function handleNewChatMembers(ctx: Context): Promise<void> {
     }
 
     // New user (or scanned-only placeholder) → create/reset as new
-    const user = getOrCreateUser(member.id, chatId, member.username ?? null, name);
+    const user = getOrCreateUserNoBump(member.id, chatId, member.username ?? null, name);
     if (!user) continue;
 
     const welcome = buildNewWelcome(name, topic);
     await ctx.reply(welcome, { parse_mode: "HTML" });
     LOG(`Welcomed new user ${member.id} (${name})`);
 
-    // Mark user as seen, no intro questions
+    // Mark user as a candidate for intro questions. The actual intro flow is
+    // triggered lazily by handleIntroAnswer when the user sends their first
+    // text message — keeps the welcome lightweight and bot-restart-safe.
     const db = (await import("../data/db.js")).getDb();
     db.prepare(
-      "UPDATE users SET is_new = 1, intro_completed = 1, intro_step = 99, first_seen_at = datetime('now') WHERE id = ?",
+      "UPDATE users SET is_new = 1, intro_step = 0 WHERE id = ?",
     ).run(user.id);
   }
 }
@@ -350,6 +352,14 @@ export async function handleLeftChatMember(ctx: Context): Promise<void> {
 }
 
 // ── Intro question asker ──
+export async function askIntroQuestionPublic(
+  ctx: Context,
+  userId: number,
+  step: number,
+): Promise<void> {
+  return askIntroQuestion(ctx, userId, step);
+}
+
 async function askIntroQuestion(ctx: Context, userId: number, step: number): Promise<void> {
   if (step >= QUESTIONS.length) {
     markIntroCompleted(userId);
@@ -400,6 +410,18 @@ export async function handleIntroAnswer(ctx: Context): Promise<boolean> {
     }
     markIntroCompleted(user.id);
     return true;
+  }
+
+  // First-time entry: if user just joined and hasn't been asked anything yet
+  // (step === 0 AND no intro-question has ever been sent for them), pose the
+  // first question before treating this message as an answer.
+  // We use intro_asked_at field semantics: if step 0 has not been asked, send it.
+  // If the user happens to type something before we asked, askIntroQuestion returns
+  // a question and we still record the answer immediately after — not ideal UX
+  // but won't data-corrupt.
+  if (step === 0 && !alreadyFilled) {
+    await askIntroQuestion(ctx, user.id, 0);
+    // Then proceed to record this message as the answer.
   }
 
   // Save answer

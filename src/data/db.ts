@@ -25,6 +25,10 @@ export function getDb(): Database {
   _db.exec("PRAGMA cache_size = -32000");
   _db.exec("PRAGMA mmap_size = 268435456");
   _db.exec("PRAGMA synchronous = NORMAL");
+  // Defense in depth: SQLite-recommended defaults for webapps. These must be
+  // set on every connection (foreign_keys is per-connection, not persistent).
+  _db.exec("PRAGMA busy_timeout = 5000");
+  _db.exec("PRAGMA foreign_keys = ON");
 
   // Create migrations table
   _db.exec(`

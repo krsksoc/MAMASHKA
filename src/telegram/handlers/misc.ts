@@ -1,5 +1,27 @@
 import type { Context } from "grammy";
+import { generateMamoolyaNews } from "../../services/summary.js";
 import { formatBold } from "../formatters/index.js";
+
+/**
+ * Public /summary — open to everyone (was admin-only). Generates a chat
+ * digest from the latest 1000 messages via LLM. Same backend as the
+ * "💬 Саммари чата" button in /menu (callback `menu_summary`).
+ *
+ * Rate-limit at the LLM tier is sufficient for typical chat traffic.
+ */
+export async function handleSummary(ctx: Context): Promise<void> {
+  const chatId = ctx.chat?.id;
+  if (!chatId) return;
+  await ctx.reply("⏳ Собираю последние 1000 сообщений...");
+  try {
+    const summary = await generateMamoolyaNews(chatId, 1000);
+    await ctx.reply(`${formatBold("Саммари чата")}\n\n${summary}`);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[SUMMARY] error for chat=${chatId}:`, msg);
+    await ctx.reply(`❌ Ошибка генерации саммари: ${msg.slice(0, 200)}`);
+  }
+}
 
 export async function handleMisc(ctx: Context): Promise<void> {
   const text = ctx.update.message?.text ?? "";
@@ -12,7 +34,30 @@ export async function handleMisc(ctx: Context): Promise<void> {
   console.error(`[MISC] text="${text}" cmd="${cmd}" chat=${ctx.chat?.id} from=${ctx.from?.id}`);
 
   switch (cmd) {
-    case "start":
+    case "start": {
+      // Welcome / onboarding for new users.
+      await ctx.reply(
+        `${formatBold("Привет! Я Мамуля 👋")}\n\n` +
+          `Я мемный бот-терапевт для чата /krsk soc. Веду статистику, ` +
+          `собираю цитаты, развлекаю, имитирую твой стиль.\n\n` +
+          `Что умею:\n` +
+          `📊 /my_stats — твоя статистика\n` +
+          `🏅 /achievements — твои достижения\n` +
+          `🎴 Открыть Мамулю — приложение с голосованием и анонимками\n` +
+          `💬 /quote — сохранить цитату\n` +
+          `🎲 /dvach — случайный пост\n` +
+          `🔮 /predict — предсказание на день\n\n` +
+          `Полный список команд: /help`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🎴 Открыть Мамулю", web_app: { url: "https://maman.krsksoc.pwtr.dev/?v=12&t=20260802-1755" } }],
+            ],
+          },
+        },
+      );
+      break;
+    }
     case "help": {
       await ctx.reply(
         `${formatBold("Мамуля — мемный бот-терапевт")}\n\n` +
@@ -26,11 +71,14 @@ export async function handleMisc(ctx: Context): Promise<void> {
           `/quote — сохранить цитату\n` +
           `/horoscope — гороскоп\n` +
           `/roll — бросить кубик\n` +
+          `/achievements — достижения\n` +
+          `/summary — саммари чата\n` +
+          `/menu — меню\n` +
           `/help — помощь`,
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "🎴 Открыть Мамулю", url: "https://maman.krsksoc.pwtr.dev/?v=3" }],
+              [{ text: "🎴 Открыть Мамулю", web_app: { url: "https://maman.krsksoc.pwtr.dev/?v=12&t=20260802-1755" } }],
             ],
           },
         },
@@ -41,7 +89,7 @@ export async function handleMisc(ctx: Context): Promise<void> {
       await ctx.reply(`${formatBold("🎴 Меню Мамули")}\n\nВыбери, что хочешь:`, {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🎴 Открыть Мамулю", url: "https://maman.krsksoc.pwtr.dev/?v=2" }],
+            [{ text: "🎴 Открыть Мамулю", web_app: { url: "https://maman.krsksoc.pwtr.dev/?v=12&t=20260802-1755" } }],
             [
               { text: "📊 Моя статистика", callback_data: "menu_my_stats" },
               { text: "🏆 Топ ноулайферов", callback_data: "menu_top_nolifers" },
@@ -78,7 +126,7 @@ export async function handleMisc(ctx: Context): Promise<void> {
       await ctx.reply("🌐 Открыть Мамулю:", {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🌐 Открыть веб-приложение", url: "https://maman.krsksoc.pwtr.dev/" }],
+            [{ text: "🌐 Открыть веб-приложение", web_app: { url: "https://maman.krsksoc.pwtr.dev/?v=12&t=20260802-1755" } }],
           ],
         },
       });

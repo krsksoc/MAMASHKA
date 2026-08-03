@@ -6,6 +6,32 @@ export interface LLMProvider {
   readonly supportsStreaming: boolean;
 }
 
+// Default per-request timeout for LLM HTTP fetches. Override via env MAMOOLYA_LLM_TIMEOUT_MS.
+export const DEFAULT_LLM_TIMEOUT_MS = 30_000;
+
+export function getLlmTimeoutMs(): number {
+  const env = (typeof process !== "undefined" ? process.env?.MAMOOLYA_LLM_TIMEOUT_MS : undefined)
+    ?? "";
+  const n = parseInt(env, 10);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_LLM_TIMEOUT_MS;
+}
+
+// Wraps a fetch call with an AbortController + deadline, preventing a hung provider
+// from freezing the whole LLM request queue.
+export async function fetchWithTimeout(
+  input: string,
+  init: RequestInit,
+  timeoutMs: number = getLlmTimeoutMs(),
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Shared response type guards for LLM API responses
 
 export function isOpenAIMessageContent(

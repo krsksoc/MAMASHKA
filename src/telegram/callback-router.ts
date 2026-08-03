@@ -1,22 +1,50 @@
 import type { Bot, Context } from "grammy";
-import { getAdminIds, getConfig } from "../core/config.js";
 import { getUserByTelegramId } from "../data/repos/users.js";
 import { getTopUsers, getUserMessageCount } from "../services/stats.js";
 import { generateMamoolyaNews } from "../services/summary.js";
+import {
+  generateDvach,
+  generateFact,
+  generateHoroscope,
+  generatePsychologist,
+  rollDice,
+} from "../services/entertainment.js";
 import { formatBold, formatRank, formatUserName } from "./formatters/index.js";
+import {
+  handleAchievementsBack,
+  handleAchievementsCategory,
+  handleAchievementsToggleNotify,
+} from "./handlers/achievements.js";
+import { handleQuotes } from "./handlers/quotes.js";
+import { handleIgnoreCallback } from "./middleware/ignore.js";
 
-const WEBAPP_URL = "https://maman.krsksoc.pwtr.dev/?v=3";
+// Hard-coded predictor (callback has no chat-scoped rep; just generate random).
+function predictRandom(): string {
+  const list = [
+    "Сегодня твой день! ✨",
+    "Жди неожиданного сообщения... 📩",
+    "Пицца — хорошая идея. 🍕",
+    "Кто-то из старого чата вспомнит о тебе. 👀",
+    "Не спорь с дураками, сегодня они особенно активны. 🤡",
+    "Удача на твоей стороне, дерзай! 🍀",
+    "Сделай перерыв, ты заслужил. ☕",
+    "Сегодня лучше не рисковать. ⚠️",
+  ];
+  const p = list[Math.floor(Math.random() * list.length)] ?? list[0] ?? "";
+  return `🔮 ${p}`;
+}
 
-function isAdmin(ctx: Context): boolean {
-  const config = getConfig();
-  const adminIds = getAdminIds(config);
-  return adminIds.includes(ctx.from?.id ?? 0);
+const WEBAPP_URL = "https://maman.krsksoc.pwtr.dev/?v=12&t=20260802-1755";
+
+// Reply in current chat, keeping keyboard. Used by buttons that previously returned text-only stubs.
+async function replyWithMenu(ctx: Context, text: string) {
+  await ctx.reply(text, { parse_mode: "HTML", reply_markup: mainMenuKeyboard as any });
 }
 
 // Inline keyboards
 const mainMenuKeyboard = {
   inline_keyboard: [
-    [{ text: "🎴 Открыть Мамулю", url: WEBAPP_URL }],
+    [{ text: "🎴 Открыть Мамулю", web_app: { url: WEBAPP_URL } }],
     [
       { text: "📊 Моя статистика", callback_data: "menu_my_stats" },
       { text: "🏆 Топ ноулайферов", callback_data: "menu_top_nolifers" },
@@ -121,10 +149,7 @@ export async function handleCallback(ctx: Context): Promise<void> {
       break;
     }
     case "menu_summary": {
-      if (!isAdmin(ctx)) {
-        await ctx.answerCallbackQuery("⛔ Только для админов.");
-        return;
-      }
+      // Available to everyone.
       await ctx.answerCallbackQuery("⏳ Собираю саммари...");
       const summary = await generateMamoolyaNews(chatId, 1000);
       await ctx.reply(`💬 ${formatBold("Саммари чата")}\n\n${summary}`, {
@@ -140,17 +165,33 @@ export async function handleCallback(ctx: Context): Promise<void> {
       );
       break;
     }
+
     case "menu_dvach": {
       await ctx.answerCallbackQuery("🃏 Ищу пост...");
-      // dvach command is handled by fun handler, route there
-      await ctx.reply("Используй команду /dvach для случайного поста.");
+      const userId = ctx.from?.id ?? 0;
+      const userName = ctx.from?.first_name ?? ctx.from?.username ?? null;
+      if (!userId) {
+        await ctx.reply("Не удалось определить пользователя.");
+        return;
+      }
+      const result = await generateDvach(userId, chatId, userName);
+      await replyWithMenu(ctx, result);
       break;
     }
+
     case "menu_quotes": {
-      await ctx.answerCallbackQuery("📜 Ищу цитату...");
-      await ctx.reply("Используй команду /quote для сохранения цитаты, /quotes для списка.");
+      await ctx.answerCallbackQuery("📜 Цитаты...");
+      // Synthesize a /quotes command-style message so handleQuotes routes properly.
+      // Grammy's Context.message is typed readonly; cast through unknown to bypass.
+      (ctx as unknown as { message: { text: string; chat: typeof ctx.chat; from: typeof ctx.from } }).message = {
+        text: "/quotes",
+        chat: ctx.chat,
+        from: ctx.from,
+      } as never;
+      await handleQuotes(ctx);
       break;
     }
+
     case "menu_help": {
       await answerAndEdit(
         ctx,
@@ -183,63 +224,59 @@ export async function handleCallback(ctx: Context): Promise<void> {
     // === Fun submenu ===
     case "menu_roll": {
       await ctx.answerCallbackQuery("🎲 Бросаю...");
-      const roll = Math.floor(Math.random() * 6) + 1;
-      await ctx.reply(`🎲 Выпало: <b>${roll}</b>`, { parse_mode: "HTML" });
+      await replyWithMenu(
+        ctx,
+        `🎲 Выпало: <b>${await rollDice(ctx.from?.first_name ?? null)}</b>`,
+      );
       break;
     }
     case "menu_predict": {
       await ctx.answerCallbackQuery("🔮 Гадаю...");
-      const predictions = [
-        "Сегодня твой день! ✨",
-        "Жди неожиданного сообщения... 📩",
-        "Пицца — хорошая идея. 🍕",
-        "Кто-то из старого чата вспомнит о тебе. 👀",
-        "Не спорь с дураками, сегодня они особенно активны. 🤡",
-        "Удача на твоей стороне, дерзай! 🍀",
-        "Сделай перерыв, ты заслужил. ☕",
-        "Сегодня лучше не рисковать. ⚠️",
-      ];
-      const p = predictions[Math.floor(Math.random() * predictions.length)];
-      await ctx.reply(`🔮 ${p}`);
+      await replyWithMenu(ctx, predictRandom());
       break;
     }
     case "menu_psychologist": {
       await ctx.answerCallbackQuery("🧠 Анализирую...");
-      await ctx.reply(
-        "🧠 Ты пришёл к мемному боту за психологической помощью?\n\nЛадно, вот совет: закрой телеграм и погуляй 20 минут. Вернёшься — будет легче.",
-      );
+      const userId = ctx.from?.id ?? 0;
+      const userName = ctx.from?.first_name ?? ctx.from?.username ?? null;
+      if (!userId) {
+        await ctx.reply("Не удалось определить пользователя.");
+        return;
+      }
+      const msg = ""; // no specific user message in callback context
+      await replyWithMenu(ctx, await generatePsychologist(userId, chatId, userName, msg));
       break;
     }
     case "menu_fact": {
       await ctx.answerCallbackQuery("🧐 Ищу факт...");
-      const facts = [
-        "Осьминоги имеют три сердца и синюю кровь. 🐙",
-        "Медведи-панды кактуса не едят, бамбук — да. 🐼",
-        "Человеческий мозг потребляет 20% энергии тела. 🧠",
-        "В космосе нельзя плакать — слёзы не текут, а собираются в шарики. 🚀",
-        "Бананы — ягоды, а клубника — нет. 🍌",
-      ];
-      const f = facts[Math.floor(Math.random() * facts.length)];
-      await ctx.reply(`🧐 ${f}`);
+      const userId = ctx.from?.id ?? 0;
+      const userName = ctx.from?.first_name ?? ctx.from?.username ?? null;
+      if (!userId) {
+        await ctx.reply("Не удалось определить пользователя.");
+        return;
+      }
+      await replyWithMenu(ctx, await generateFact(userId, chatId, userName));
       break;
     }
     case "menu_horoscope": {
       await ctx.answerCallbackQuery("♈ Смотрю звёзды...");
-      const horoscopes = [
-        "♈ Овен: Сегодня твоя энергия зашкаливает. Направь её на дело, а не на срачи в чате.",
-        "♉ Телец: Финансовая удача близко. Не трать всё на стикеры.",
-        "♊ Близнецы: Двойственность — твой конёк. Сегодня оба твоих лица будут правы.",
-        "♋ Рак: Эмоции на пределе. Лучше не читать треды с 50+ сообщений.",
-        "♌ Лев: В центре внимания. Сделай мем, он зайдёт.",
-        "♍ Дева: Перфекционизм мешает. Отправь сообщение с опечаткой — освободись.",
-      ];
-      const h = horoscopes[Math.floor(Math.random() * horoscopes.length)];
-      await ctx.reply(`♈ ${h}`);
+      const userId = ctx.from?.id ?? 0;
+      const userName = ctx.from?.first_name ?? ctx.from?.username ?? null;
+      if (!userId) {
+        await ctx.reply("Не удалось определить пользователя.");
+        return;
+      }
+      // generateHoroscope(userName, sign, userId, chatId) — pass empty sign to let DB resolve.
+      await replyWithMenu(ctx, await generateHoroscope(userName, "", userId, chatId));
       break;
     }
     case "menu_imitate": {
       await ctx.answerCallbackQuery("👤 Анализирую стиль...");
-      await ctx.reply("👤 Напиши /imitate @username — я попробую писать в стиле этого человека.");
+      // Forward to /imitate handler (which expects a username arg). Tell user to type it.
+      await replyWithMenu(
+        ctx,
+        "👤 <b>Имитация</b>\n\nЧтобы я подделал стиль юзера, ответь на сообщение в чате командой <code>/imitate</code> или напиши <code>/imitate @username</code>.",
+      );
       break;
     }
     case "menu_back": {
@@ -252,11 +289,28 @@ export async function handleCallback(ctx: Context): Promise<void> {
     }
 
     default: {
+      // Achievement inline buttons: ach:cat:<id>, ach:back, ach:toggle_notify
+      if (data.startsWith("ach:cat:")) {
+        await handleAchievementsCategory(ctx);
+        break;
+      }
+      if (data === "ach:back") {
+        await handleAchievementsBack(ctx);
+        break;
+      }
+      if (data === "ach:toggle_notify") {
+        await handleAchievementsToggleNotify(ctx);
+        break;
+      }
+      // Ignore inline buttons: ignore:on, ignore:off, ignore:cancel, ignore:noop
+      if (data.startsWith("ignore:")) {
+        await handleIgnoreCallback(ctx);
+        break;
+      }
       await ctx.answerCallbackQuery("❓ Неизвестная кнопка");
     }
   }
 }
-
 export function registerCallbacks(bot: Bot<Context>): void {
   bot.on("callback_query:data", handleCallback);
 }

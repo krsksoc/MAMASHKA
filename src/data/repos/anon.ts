@@ -65,3 +65,15 @@ export function getMyAnons(senderId: number): AnonMessage[] {
   }
   return rows.filter(isRecord).map(rowToAnonMessage);
 }
+
+// Hard-delete an anon message. Only the original sender may delete it,
+// and only while it is still 'pending' (already-published/rejected are immutable
+// — admin-only, and `delete` would just be a soft-delete anyway).
+// Returns true if a row was actually deleted.
+export function deleteMyAnon(id: number, senderId: number): boolean {
+  const db = getDb();
+  const result = db
+    .prepare("DELETE FROM anon_messages WHERE id = ? AND sender_id = ? AND status = 'pending'")
+    .run(id, senderId);
+  return result.changes > 0;
+}

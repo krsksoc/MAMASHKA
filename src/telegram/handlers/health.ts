@@ -31,15 +31,15 @@ export async function handleHealth(ctx: Context): Promise<void> {
   ].join("\n");
 
   const lines = [
-    "*Health Check*",
+    "<b>Health Check</b>",
     "",
-    `📊 *DB*: ${Number(messagesRow?.cnt ?? 0)} msgs | ${Number(usersRow?.cnt ?? 0)} users`,
-    `🧠 *Mem*: ${rss}MB RSS`,
-    `⏱️ *Uptime*: ${uptimeStr}`,
+    `📊 <b>DB:</b> ${Number(messagesRow?.cnt ?? 0)} msgs | ${Number(usersRow?.cnt ?? 0)} users`,
+    `🧠 <b>Mem:</b> ${rss}MB RSS`,
+    `⏱️ <b>Uptime:</b> ${uptimeStr}`,
     "",
-    "*Providers:*",
+    "<b>Providers:</b>",
     providers,
   ];
 
-  await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" });
+  await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
 }

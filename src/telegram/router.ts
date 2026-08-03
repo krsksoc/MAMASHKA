@@ -1,9 +1,14 @@
 import type { Bot, Context } from "grammy";
 import { handleAdmin } from "./handlers/admin.js";
+import {
+  handleAchievements,
+  handleAchievementsNotify,
+} from "./handlers/achievements.js";
 import { handleAsk } from "./handlers/ask.js";
 import { handleFun } from "./handlers/fun.js";
 import { handleHealth } from "./handlers/health.js";
-import { handleMisc } from "./handlers/misc.js";
+import { handleIgnoreMe } from "./middleware/ignore.js";
+import { handleMisc, handleSummary } from "./handlers/misc.js";
 import { handleQuotes } from "./handlers/quotes.js";
 import { handleReputation } from "./handlers/reputation.js";
 import { handleStats } from "./handlers/stats.js";
@@ -31,7 +36,7 @@ export function registerHandlers(bot: Bot<Context>): void {
   bot.command("quote", handleQuotes);
   bot.command("quotes", handleQuotes);
   bot.command("randomquote", handleQuotes);
-  bot.command("summary", handleAdmin);
+  bot.command("summary", handleSummary);
   bot.command("ask", handleAsk);
   bot.command("summary_week", adminOnly(), handleAdmin);
   bot.command("ban_vote", adminOnly(), handleAdmin);
@@ -41,8 +46,11 @@ export function registerHandlers(bot: Bot<Context>): void {
   bot.command("help", handleMisc);
   bot.command("menu", handleMisc);
   bot.command("m_version", handleMisc);
-  bot.command("ignore_me", handleMisc);
+  bot.command("ignore_me", handleIgnoreMe);
   bot.command("notice_me", handleMisc);
   bot.command("webapp", handleMisc);
   bot.command("health", handleHealth);
+  bot.command("achievements", handleAchievements);
+  bot.command("ach", handleAchievements);
+  bot.command("achievements_notify", handleAchievementsNotify);
 }

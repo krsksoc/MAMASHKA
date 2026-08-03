@@ -2,6 +2,7 @@ import { getConfig } from "../../core/config.js";
 import { LLMError } from "../../core/errors.js";
 import type { LLMOptions, LLMRequest } from "../../core/types.js";
 import type { LLMProvider } from "../provider.js";
+import { fetchWithTimeout } from "../provider.js";
 
 function extractText(json: unknown): string {
   if (typeof json !== "object" || json === null) return "";
@@ -27,22 +28,30 @@ export function createWormsoftProvider(): LLMProvider {
         throw new LLMError("Wormsoft API key not configured", "wormsoft");
       }
       const model = options?.model ?? "openai/gpt-oss:120b";
-      const response = await fetch(`${config.WORM_ENDPOINT}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${config.WORM_KEY}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: request.system },
-            { role: "user", content: request.user },
-          ],
-          temperature: options?.temperature ?? 0.7,
-          max_tokens: options?.maxTokens ?? 1024,
-        }),
-      });
+      let response: Response;
+      try {
+        response = await fetchWithTimeout(`${config.WORM_ENDPOINT}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.WORM_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: request.system },
+              { role: "user", content: request.user },
+            ],
+            temperature: options?.temperature ?? 0.7,
+            max_tokens: options?.maxTokens ?? 1024,
+          }),
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          throw new LLMError(`Wormsoft timeout (${(err as Error).message})`, "wormsoft", { cause: err });
+        }
+        throw err;
+      }
       if (!response.ok) {
         const text = await response.text();
         throw new LLMError(`Wormsoft API error ${response.status}: ${text}`, "wormsoft");

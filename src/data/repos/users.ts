@@ -29,6 +29,9 @@ function rowToUser(row: Record<string, unknown>): User {
     lifestyle: typeof row.lifestyle === "string" ? row.lifestyle : null,
     morals: typeof row.morals === "string" ? row.morals : null,
     sexRole: typeof row.sex_role === "string" ? row.sex_role : null,
+    avatarUrl: typeof row.avatar_url === "string" ? row.avatar_url : null,
+    avatarUpdatedAt:
+      typeof row.avatar_updated_at === "string" ? row.avatar_updated_at : null,
   };
 }
 
@@ -43,6 +46,37 @@ export function getUserByTelegramId(telegramId: number, chatId: number): User | 
   return rowToUser(row);
 }
 
+/**
+ * Read or create user. Does NOT touch message_count.
+ * Use this everywhere except in /tracker middleware, where each incoming
+ * message legitimately increments the count.
+ */
+export function getOrCreateUserNoBump(
+  telegramId: number,
+  chatId: number,
+  username: string | null,
+  displayName: string | null,
+): User | null {
+  const db = getDb();
+  const existing = getUserByTelegramId(telegramId, chatId);
+  if (existing) {
+    db.prepare(
+      "UPDATE users SET username = ?, display_name = ?, last_message_at = datetime('now') WHERE id = ?",
+    ).run(username, displayName, existing.id);
+    return getUserByTelegramId(telegramId, chatId);
+  }
+  db.prepare(
+    "INSERT INTO users (telegram_id, chat_id, username, display_name, first_seen_at, last_message_at, message_count) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), 0)",
+  ).run(telegramId, chatId, username, displayName);
+  return getUserByTelegramId(telegramId, chatId);
+}
+
+/**
+ * @deprecated Use getOrCreateUserNoBump + bumpMessage separately.
+ * This version is kept as a fallback during the migration period; it
+ * still increments message_count on update, which has historically caused
+ * double-counting in welcome/reply paths. Removed in next refactor.
+ */
 export function getOrCreateUser(
   telegramId: number,
   chatId: number,
@@ -52,7 +86,6 @@ export function getOrCreateUser(
   const db = getDb();
   const user = getUserByTelegramId(telegramId, chatId);
   if (user) {
-    // Update
     db.prepare(
       "UPDATE users SET username = ?, display_name = ?, last_message_at = datetime('now'), message_count = message_count + 1 WHERE id = ?",
     ).run(username, displayName, user.id);
@@ -65,12 +98,30 @@ export function getOrCreateUser(
   return getUserByTelegramId(telegramId, chatId);
 }
 
+export function bumpMessage(userId: number): void {
+  const db = getDb();
+  db.prepare("UPDATE users SET message_count = message_count + 1 WHERE id = ?").run(userId);
+}
+
 export function getUser(id: number): User | null {
   const db = getDb();
   const row = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
   if (!isRecord(row)) {
     return null;
   }
+  return rowToUser(row);
+}
+
+// Look up by @username — Telegram-style username without '@'.
+export function getUserByUsername(chatId: number, username: string): User | null {
+  const db = getDb();
+  const clean = username.replace(/^@/, "").toLowerCase();
+  const row = db
+    .prepare(
+      "SELECT * FROM users WHERE chat_id = ? AND LOWER(username) = ? ORDER BY message_count DESC LIMIT 1",
+    )
+    .get(chatId, clean);
+  if (!isRecord(row)) return null;
   return rowToUser(row);
 }
 
@@ -87,13 +138,20 @@ export function getUsersByChat(chatId: number): User[] {
 
 export function getActiveUsers(chatId: number, days: number): User[] {
   const db = getDb();
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
+  // SQLite stores DATETIME as 'YYYY-MM-DD HH:MM:SS' (TEXT), so we must format
+  // the cutoff the same way for a valid lexicographic comparison. Using
+  // toISOString() would yield 'YYYY-MM-DDTHH:MM:SS.sssZ' which sorts *after*
+  // the SQLite format on string compare (because 'T' > ' '), filtering out
+  // every user whose last_message_at is within the window.
+  const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000;
+  const cutoffIso = new Date(cutoffMs).toISOString();
+  // "2026-08-01T20:13:55.000Z" → "2026-08-01 20:13:55"
+  const cutoffSqlite = cutoffIso.slice(0, 19).replace("T", " ");
   const rows = db
     .prepare(
       "SELECT * FROM users WHERE chat_id = ? AND last_message_at >= ? ORDER BY message_count DESC",
     )
-    .all(chatId, cutoff.toISOString());
+    .all(chatId, cutoffSqlite);
   if (!rows || !Array.isArray(rows)) {
     return [];
   }

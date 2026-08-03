@@ -1,6 +1,6 @@
 import type { Context } from "grammy";
 import { getAllQuotes, getRandomQuote, insertQuote } from "../../data/repos/quotes.js";
-import { getOrCreateUser } from "../../data/repos/users.js";
+import { getOrCreateUserNoBump } from "../../data/repos/users.js";
 import { formatBold } from "../formatters/index.js";
 
 export async function handleQuotes(ctx: Context): Promise<void> {
@@ -18,10 +18,12 @@ export async function handleQuotes(ctx: Context): Promise<void> {
         const author = replyTo.from;
         const savedBy = ctx.from;
         if (!savedBy) return;
+        // /quote is a meta-command — do NOT bump message_count (tracker already
+        // counted the message itself). Use NoBump variant.
         const authorUser = author
-          ? getOrCreateUser(author.id, chatId, author.username ?? null, author.first_name ?? null)
+          ? getOrCreateUserNoBump(author.id, chatId, author.username ?? null, author.first_name ?? null)
           : null;
-        const saverUser = getOrCreateUser(
+        const saverUser = getOrCreateUserNoBump(
           savedBy.id,
           chatId,
           savedBy.username ?? null,
@@ -46,7 +48,7 @@ export async function handleQuotes(ctx: Context): Promise<void> {
         return;
       }
       if (!ctx.from) return;
-      const user = getOrCreateUser(
+      const user = getOrCreateUserNoBump(
         ctx.from.id,
         chatId,
         ctx.from.username ?? null,
